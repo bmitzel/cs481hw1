@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import os, sys, random
 
-class Board(object):
+class Board():
 	axis_y = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H')
 	axis_x = tuple(range(1,9)) 
 
-	def __init__(self, black, white):
+	def __init__(self):
 		self.board = [(x, y) for x in range(1,9) for y in range(1, 9)]
 		
 	
