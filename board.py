@@ -56,7 +56,7 @@ class Player(object):
 
 
 	def getPieces(self, board):
-		
+		return 0
 
 
 	def isCheckmate():
