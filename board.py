@@ -78,6 +78,3 @@ if __name__ == "__main__":
 
 	my_board.printBoard()
 
-	my_board.moveWhite(1, 1, "rook")
-
-
