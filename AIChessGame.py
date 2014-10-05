@@ -7,9 +7,6 @@ class Color(Enum):
 	black = 2
 
 class AIChessGame(object):
-	def __init__(self):
-		self.n = 0
-
 	def printError(self):
 		print("Invalid input. Try again.\n")
 
@@ -26,13 +23,27 @@ class AIChessGame(object):
 				pass
 		return value
 
+	def printBoard(self):
+		self.board.draw()
+
 	def start(self):
-		# Print welcome message
 		print("Starting AIChessGame...\n")
-		print("Enter the starting positions for each piece.")
-		print("Valid values for X and Y are from 1-8.")
+
+		# Get the test case number
+		try:
+			self.testCase = int(input("Enter the test case number: "))
+		except ValueError:
+			self.testCase = 0
+		while (self.testCase < 1 ):
+			self.printError()
+			try:
+				self.testCase = int(input("Enter the test case number: "))
+			except ValueError:
+				pass
 		
 		# Get the starting positions for all 3 pieces: White King, White Rook, Black King
+		print("\nEnter the starting positions for each piece.")
+		print("Valid values for X and Y are from 1-8.")
 		wkX = self.getXY("White King X: ")
 		wkY = self.getXY("White King Y: ")
 		wrX = self.getXY("White Rook X: ")
@@ -41,7 +52,7 @@ class AIChessGame(object):
 		bkY = self.getXY("Black King Y: ")
 
 		# Get whether or not to use heuristicY
-		useHeuristicY = input("Use heuristicY for the Black player (Y/N)? ").upper()[:1]
+		useHeuristicY = input("\nUse heuristicY for the Black player (Y/N)? ").upper()[:1]
 		while (useHeuristicY.upper() != "Y" and useHeuristicY.upper() != "N"):
 			self.printError()
 			useHeuristicY = input("Use heuristicY for the Black player (Y/N)? ").upper()[:1]
@@ -52,7 +63,7 @@ class AIChessGame(object):
 
 		# Get the max number of moves for each player
 		try:
-			self.n = int(input("Enter the max number of moves per player: "))
+			self.n = int(input("\nEnter the max number of moves per player: "))
 		except ValueError:
 			self.n = 0
 		while (self.n < 1):
@@ -67,15 +78,6 @@ class AIChessGame(object):
 			BlackPlayer(Position(bkX, bkY))]
 		self.board = Board(self.players[0], self.players[1])
 		
-		# DEBUG: Print the players and their pieces
-		print("\n" + str(self.players[0]) + " " + str(self.players[0].pieces[0]) + " at " + str(self.players[0].pieces[0].position))
-		print(str(self.players[0]) + " " + str(self.players[0].pieces[1]) + " at " + str(self.players[0].pieces[1].position))
-		print(str(self.players[1]) + " " + str(self.players[1].pieces[0]) + " at " + str(self.players[1].pieces[0].position))
-
-		# DEBUG: Draw the chess board
-		print("\n")
-		self.board.draw()
-
 	def end(self):
 		# Is there any cleanup to do before exiting? If not, delete this function.
 		pass
@@ -128,6 +130,10 @@ class WhitePlayer(Player):
 	def heuristicX(self):
 		pass
 
+	# Make a move for the White player
+	def move(self):
+		pass
+
 class BlackPlayer(Player):
 	def __init__(self, kingPos):
 		self.pieces = [King(Color.black, kingPos)]
@@ -146,6 +152,10 @@ class BlackPlayer(Player):
 	def randomY(self):
 		pass
 
+	# Make a move for the Black player
+	def move(self):
+		pass
+
 class Piece(object):
 	def __init__(self, color, position):
 		self.color = color
@@ -153,17 +163,26 @@ class Piece(object):
 
 class King(Piece):
 	def __str__(self):
-			return "King"
+			return "king"
 
 	def __repr__(self):
 		return self.__str__()
+
+	def getLabel(self):
+		if self.color == Color.white:
+			return "w"
+		else:
+			return "b"
 
 class Rook(Piece):
 	def __str__(self):
-		return "Rook"
+		return "rook"
 
 	def __repr__(self):
 		return self.__str__()
+
+	def getLabel(self):
+		return "r"
 
 class Position(object):
 	def __init__(self, x, y):
@@ -223,36 +242,15 @@ class Board(object):
 
 	def draw(self):
 		for row in range(8, 0, -1):
-			print("   +----+----+----+----+----+----+----+----+")
+			print("   +---+---+---+---+---+---+---+---+")
 			print(" " + str(row) + " ", end = "")
 			for col in range(1, 9):
 				print("| ", end = "")
 				if self.squares[col][row] == None:
-					print("  ", end = "")
-				elif self.squares[col][row].color == Color.white:
-					if str(self.squares[col][row]) == "King":
-						print("WK", end = "")
-					else:
-						print("WR", end = "")
-					#print("| " + self.squares[row][col].label + " ")
+					print(" ", end = "")
 				else:
-					print("BK", end = "")
+					print(self.squares[col][row].getLabel(), end = "")
 				print(" ", end = "")
 			print("|")
-		print("   +----+----+----+----+----+----+----+----+")
-		print("     1    2    3    4    5    6    7    8")
-		
-class Play(object):
-	def __init__(self, black, white):
-		#self.board = dict()
-		self.board = Board(black, white)
-
-		#self.board = [((8,5), Piece('R', (8,5), black)), ((6,8), Piece('K', (6,8), black)), ((5,6), Piece('K', (5,6), white))]
-		#self.board = [((6,8), Piece('King', (6,8), black))]
-		#self.board = [((5,6), Piece('King', (5,6), white))]
-
-	def run(self, player):
-		return True
-
-	def printBoard(self):
-		self.board.boardState()
+		print("   +---+---+---+---+---+---+---+---+")
+		print("     1   2   3   4   5   6   7   8")
