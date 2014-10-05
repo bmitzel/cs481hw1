@@ -46,7 +46,7 @@ class AIChessGame(object):
 			bkY = int(input("Black King Y: "))
 		self.players = [WhitePlayer(Position(wkX, wkY), Position(wrX, wrY)),
 			BlackPlayer(Position(bkX, bkY))]
-		#self.board = Board(self.players[0], self.players[1])
+		self.board = Board(self.players[0], self.players[1])
 		
 		# Get whether or not to use heuristicY
 		useHeuristicY = input("Use heuristicY for the Black player (Y/N)? ").upper()
@@ -68,6 +68,10 @@ class AIChessGame(object):
 		print("\n" + str(self.players[0]) + " " + str(self.players[0].pieces[0]) + " at " + str(self.players[0].pieces[0].position))
 		print(str(self.players[0]) + " " + str(self.players[0].pieces[1]) + " at " + str(self.players[0].pieces[1].position))
 		print(str(self.players[1]) + " " + str(self.players[1].pieces[0]) + " at " + str(self.players[1].pieces[0].position))
+
+		# DEBUG: Draw the chess board
+		print("\n")
+		self.board.draw()
 
 	def end(self):
 		# Is there any cleanup to do before exiting? If not, delete this function.
@@ -206,30 +210,34 @@ class Position(object):
 
 class Board(object):
 	def __init__(self, white, black):
-		self.squares = [[]]
+		self.squares = [[None for x in range(10)] for x in range(10)]
 		# add white pieces to squares table
 		for piece in white.pieces:
-			print(piece.position.x)
 			self.squares[piece.position.x][piece.position.y] = piece
 		# add black piece to squares table
 		for piece in black.pieces:
 			self.squares[piece.position.x][piece.position.y] = piece
 
-		# DEBUG: display the board
-		self.display()
-
-	def display(self):
-		for row in range(8, 0):
-			for col in range(8, 0):
-				print("+----+")
-				print("|    |")
-				if squares[row][col] == None:
-					print("|    |")
+	def draw(self):
+		for row in range(8, 0, -1):
+			print("   +----+----+----+----+----+----+----+----+")
+			print(" " + str(row) + " ", end = "")
+			for col in range(1, 9):
+				print("| ", end = "")
+				if self.squares[col][row] == None:
+					print("  ", end = "")
+				elif self.squares[col][row].color == Color.white:
+					if str(self.squares[col][row]) == "King":
+						print("WK", end = "")
+					else:
+						print("WR", end = "")
+					#print("| " + self.squares[row][col].label + " ")
 				else:
-					print("| " + squares[row][col].label + " |")
-				print("|    |")
-				print("+----+")
-			print()
+					print("BK", end = "")
+				print(" ", end = "")
+			print("|")
+		print("   +----+----+----+----+----+----+----+----+")
+		print("     1    2    3    4    5    6    7    8")
 		
 		# 0-10, squares 0 and 9 are used for underAttack calculations. 
 		# Board is limited 1-8
