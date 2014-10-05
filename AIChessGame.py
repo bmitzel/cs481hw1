@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 import os, sys, random
+from enum import Enum
+
+class Color(Enum):
+	white = 1
+	black = 2
 
 class AIChessGame(object):
 	def __init__(self):
-		self.board = Board()
 		self.n = 0
 
 	def printError(self):
@@ -40,8 +44,9 @@ class AIChessGame(object):
 		while (bkY < 1 or bkY > 8):
 			self.printError()
 			bkY = int(input("Black King Y: "))
-		self.players = [WhitePlayer(Position(wkX, wkY), Position(wrX, wrY)), 
+		self.players = [WhitePlayer(Position(wkX, wkY), Position(wrX, wrY)),
 			BlackPlayer(Position(bkX, bkY))]
+		#self.board = Board(self.players[0], self.players[1])
 		
 		# Get whether or not to use heuristicY
 		useHeuristicY = input("Use heuristicY for the Black player (Y/N)? ").upper()
@@ -60,18 +65,15 @@ class AIChessGame(object):
 			self.n = int(input("Enter the max number of moves per player: "))
 
 		# DEBUG: Print the players and their pieces
-		print("\n" + self.players[0] + self.players[0].pieces[0])
-		print(self.players[0] + self.players[0].pieces[1])
-		print(self.players[1] + self.players[1].pieces[0])
+		print("\n" + str(self.players[0]) + " " + str(self.players[0].pieces[0]) + " at " + str(self.players[0].pieces[0].position))
+		print(str(self.players[0]) + " " + str(self.players[0].pieces[1]) + " at " + str(self.players[0].pieces[1].position))
+		print(str(self.players[1]) + " " + str(self.players[1].pieces[0]) + " at " + str(self.players[1].pieces[0].position))
 
 	def end(self):
 		# Is there any cleanup to do before exiting? If not, delete this function.
 		pass
 
 class Player(object):
-	def __init__(self, color):
-		self.color = color
-
 	def getPieces(self, board):
 		return [pos for pos in board if board[pos].color is self.color]
 
@@ -107,7 +109,7 @@ class Player(object):
 
 class WhitePlayer(Player):
 	def __init__(self, kingPos, rookPos):
-		self.pieces = [King(kingPos), Rook(rookPos)]
+		self.pieces = [King(Color.white, kingPos), Rook(Color.white, rookPos)]
 
 	def __str__(self):
 		return "White"
@@ -121,7 +123,7 @@ class WhitePlayer(Player):
 
 class BlackPlayer(Player):
 	def __init__(self, kingPos):
-		self.pieces = [King(kingPos)]
+		self.pieces = [King(Color.black, kingPos)]
 
 	def __str__(self):
 		return "Black"
@@ -138,19 +140,20 @@ class BlackPlayer(Player):
 		pass
 
 class Piece(object):
-	def __init__(self, position):
+	def __init__(self, color, position):
+		self.color = color
 		self.position = position
 
 class King(Piece):
 	def __str__(self):
-		return "King at" + self.position
+			return "King"
 
 	def __repr__(self):
 		return self.__str__()
 
 class Rook(Piece):
 	def __str__(self):
-		return "Rook at" + self.position
+		return "Rook"
 
 	def __repr__(self):
 		return self.__str__()
@@ -161,7 +164,7 @@ class Position(object):
 		self.y = y
 
 	def __str__(self):
-		return "(" + x + ", " + y + ")"
+		return "(" + str(self.x) + ", " + str(self.y) + ")"
 
 	def __repr__(self):
 		return self.__str__()
@@ -202,8 +205,31 @@ class Position(object):
 		return Position(x + 1, y - 1)
 
 class Board(object):
-	def __init__(self):
-		pass
+	def __init__(self, white, black):
+		self.squares = [[]]
+		# add white pieces to squares table
+		for piece in white.pieces:
+			print(piece.position.x)
+			self.squares[piece.position.x][piece.position.y] = piece
+		# add black piece to squares table
+		for piece in black.pieces:
+			self.squares[piece.position.x][piece.position.y] = piece
+
+		# DEBUG: display the board
+		self.display()
+
+	def display(self):
+		for row in range(8, 0):
+			for col in range(8, 0):
+				print("+----+")
+				print("|    |")
+				if squares[row][col] == None:
+					print("|    |")
+				else:
+					print("| " + squares[row][col].label + " |")
+				print("|    |")
+				print("+----+")
+			print()
 		
 		# 0-10, squares 0 and 9 are used for underAttack calculations. 
 		# Board is limited 1-8
