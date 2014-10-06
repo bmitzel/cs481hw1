@@ -203,6 +203,7 @@ class Rook(Piece):
 	# Returns a list of boards corresponding to all the legal moves for the rook
 	# Illegal moves:
 	#   - Moving onto or beyond a square occupied by another piece of the same color
+	#   - Capturing the opposing king
 	def getLegalMoves(self, board):
 		moves = []
 		if self.color == Color["White"]:
