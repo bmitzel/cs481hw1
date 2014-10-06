@@ -28,12 +28,11 @@ def printStart(players, useHeuristicY):
 def play(game):
 	printStart(game.players, game.useHeuristicY)
 	game.printBoard()
-	# Disabling n for now and just setting it equal to 1
+	# Disabling n for now and just using 1 move per player
 	#for n in range(game.n):
 	for n in range(1):
 		for player in game.players:
 			# player.move() (this function both makes and prints the move e.g. "Rook to (1, 1)")
-			print("Drawing all legal moves for the " + str(player) + " player...")
 			player.move(game)
 			# game.printBoard()
 			# check for stale mate and check mate

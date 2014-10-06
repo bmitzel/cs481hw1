@@ -2,6 +2,8 @@
 import os, sys, random
 from Graph import Graph
 
+debug = True
+
 Color = {"White":0, "Black":1}
 
 class AIChessGame(object):
@@ -75,15 +77,12 @@ class AIChessGame(object):
 		self.players = [WhitePlayer(Position(wkX, wkY), Position(wrX, wrY)),
 			BlackPlayer(Position(bkX, bkY))]
 		self.board = Board(self.players[0].pieces, self.players[1].pieces)
-		
+
 	def end(self):
 		# Is there any cleanup to do before exiting? If not, delete this function.
 		pass
 
 class Player(object):
-	def getPieces(self, board):
-		return [pos for pos in board if board[pos].color is self.color]
-
 	def isCheckmate():
 		return False
 
@@ -91,24 +90,6 @@ class Player(object):
 		return True
 
 	def isChecked(self, board):
-		return True
-
-	def move(self, board, start, end):
-		return 0
-
-	def legalMoves(self, board, start, end):
-		return 0
-
-	def checkRook(self, start, end):
-		return True
-
-	def rookMoves(self, start, end):
-		return True
-
-	def kingMoves(self, start, end):
-		return True
-
-	def getMove(self, board):
 		return True
 
 class WhitePlayer(Player):
@@ -125,6 +106,8 @@ class WhitePlayer(Player):
 	def heuristicX(self, game):
 		graph = Graph(game.board)
 		moves = []
+		if debug:
+			print("Drawing all legal moves for the White player...\n")
 		for piece in self.pieces:
 			moves.extend(piece.getLegalMoves(game.board))
 		graph.root.insert(moves)
@@ -151,6 +134,8 @@ class BlackPlayer(Player):
 	# Get random move
 	def randomY(self, game):
 		moves = []
+		if debug:
+			print("Drawing all legal moves for the Black player...\n")
 		for piece in self.pieces:
 			moves.extend(piece.getLegalMoves(game.board))
 
@@ -178,22 +163,31 @@ class King(Piece):
 			return "b"
 
 	# Returns a list of boards corresponding to all the legal moves for the king
-	# Keep in mind that the king cannot move into check
+	# Illegal moves:
+	#   - Moving into check
+	#   - Moving onto a square occupied by another piece of the same color
 	def getLegalMoves(self, board):
 		moves = []
 		attacked = board.underAttack((int(self.color) + 1) % 2)
-		for y in range(max(1, self.position.y + 1), min(8, self.position.y - 2), -1):
-			for x in range(max(1, self.position.x - 1), min(8, self.position.x + 2)):
-				if (self.position != Position(x, y)) and (Position(x, y) not in attacked):
-					if self.color == Color["White"]:
-						print("White ", end = "")
-					else:
-						print("Black ", end = "")
-					print(str(self) + " to " + str(Position(x, y)))
-					newMove = Move(self, Position(x, y))
-					newBoard = board.move(newMove)
+		if self.color == Color["White"]:
+			occupied = list(board.occupied)
+			occupied.remove(self.position)
+		else:
+			occupied = []
+		for y in range(min(8, self.position.y + 1), max(0, self.position.y - 2), -1):
+			for x in range(max(1, self.position.x - 1), min(9, self.position.x + 2)):
+				newPosition = Position(x, y)
+				if ((self.position != newPosition) and (newPosition not in attacked) and
+						(newPosition not in occupied)):
+					newBoard = board.move(Move(self, newPosition))
 					moves.append(newBoard)
-					newBoard.draw()
+					if debug:
+						if self.color == Color["White"]:
+							print("White ", end = "")
+						else:
+							print("Black ", end = "")
+						print(str(self) + " to " + str(newPosition))
+						newBoard.draw()
 		return moves
 
 class Rook(Piece):
@@ -207,25 +201,48 @@ class Rook(Piece):
 		return "r"
 
 	# Returns a list of boards corresponding to all the legal moves for the rook
+	# Illegal moves:
+	#   - Moving onto or beyond a square occupied by another piece of the same color
 	def getLegalMoves(self, board):
 		moves = []
-		# Vertical moves
-		for y in range(1, 9):
-			if (self.position != Position(self.position.x, y)):
-				print("White " + str(self) + " to " + str(Position(self.position.x, y)))
-				newMove = Move(self, Position(self.position.x, y))
-				newBoard = board.move(newMove)
-				moves.append(newBoard)
-				newBoard.draw()
-		# Horizontal moves
-		for x in range(1, 9):
-			if (self.position != Position(x, self.position.y)):
-				print("White " + str(self) + " to " + str(Position(x, self.position.y)))
-				newMove = Move(self, Position(x, self.position.y))
-				newBoard = board.move(newMove)
-				moves.append(newBoard)
-				newBoard.draw()
+		if self.color == Color["White"]:
+			occupied = list(board.occupied)
+			occupied.remove(self.position)
+		else:
+			occupied = []
+		print(occupied)
+		# Move up
+		for y in range(self.position.y + 1, 9):
+			newPosition = Position(self.position.x, y)
+			if newPosition in occupied:
+				break
+			self.addMove(moves, board, newPosition)
+		# Move down
+		for y in range(self.position.y - 1, 0, -1):
+			newPosition = Position(self.position.x, y)
+			if newPosition in occupied:
+				break
+			self.addMove(moves, board, newPosition)
+		# Move left
+		for x in range(self.position.x - 1, 0, -1):
+			newPosition = Position(x, self.position.y)
+			if newPosition in occupied:
+				break
+			self.addMove(moves, board, newPosition)
+		# Move right
+		for x in range(self.position.x + 1, 9):
+			newPosition = Position(x, self.position.y)
+			if newPosition in occupied:
+				break
+			self.addMove(moves, board, newPosition)
 		return moves
+
+	def addMove(self, moves, board, position):
+		newBoard = board.move(Move(self, position))
+		moves.append(newBoard)
+		if debug:
+			print("White " + str(self) + " to " + str(position))
+			newBoard.draw()
 
 class Position(object):
 	def __init__(self, x, y):
@@ -288,10 +305,14 @@ class Board(object):
 		# add pieces to squares table
 		for piece in self.pieces:
 			self.squares[piece.position.x][piece.position.y] = piece
-		self.calcWhiteAttacks(self.pieces)
-		self.calcBlackAttacks(self.pieces)
+		self.update()
 
-	def calcWhiteAttacks(self, white):
+	def update(self):
+		self.calcWhiteAttacks()
+		self.calcBlackAttacks()
+		self.calcOccupied()
+
+	def calcWhiteAttacks(self):
 		self.whiteAttacks = []
 		for piece in self.pieces:
 			if piece.color == Color["White"]:
@@ -308,12 +329,17 @@ class Board(object):
 						if y != piece.position.y:
 							self.whiteAttacks.append(Position(piece.position.x, y))
 
-	def calcBlackAttacks(self, black):
+	def calcBlackAttacks(self):
 		for piece in self.pieces:
 			if piece.color == Color["Black"]:
 				self.blackAttacks = [piece.position.tl(), piece.position.t(), piece.position.tr(),
 					piece.position.l(), piece.position.r(),
 					piece.position.bl(), piece.position.b(), piece.position.br()]
+
+	def calcOccupied(self):
+		self.occupied = []
+		for piece in self.pieces:
+			self.occupied.append(piece.position)
 
 	def draw(self):
 		for row in range(8, 0, -1):
@@ -329,7 +355,8 @@ class Board(object):
 			print("|")
 		print("   +---+---+---+---+---+---+---+---+")
 		print("     1   2   3   4   5   6   7   8")
-		wait = input("...Paused...")
+		wait = input("\n...Paused...")
+		print("\n")
 
 	# This function is for debugging only; prints all the pieces currently on the board
 	def printPieces(self):
