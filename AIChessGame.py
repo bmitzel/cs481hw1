@@ -49,16 +49,50 @@ class AIChessGame(object):
 				self.testCase = int(input("Enter the test case number: "))
 			except ValueError:
 				pass
-		
+
+		if self.testCase == 1:
+			wkX = 5
+			wkY = 6
+			wrX = 8
+			wrY = 5
+			bkX = 6
+			bkY = 8
+			self.n = 35
+		elif self.testCase == 2:
+			wkX = 6
+			wkY = 5
+			wrX = 5
+			wrY = 6
+			bkX = 4
+			bkY = 7
+			self.n = 35
+		elif self.testCase == 3:
+			wkX = 7
+			wkY = 6
+			wrX = 8
+			wrY = 5
+			bkX = 7
+			bkY = 8
+			self.n = 35
+		else:
+			print("Using Test Case 1")
+			wkX = 5
+			wkY = 6
+			wrX = 8
+			wrY = 5
+			bkX = 6
+			bkY = 8
+			self.n = 35	
+			
 		# Get the starting positions for all 3 pieces: White King, White Rook, Black King
-		print("\nEnter the starting positions for each piece.")
-		print("Valid values for X and Y are from 1-8.")
-		wkX = self.getXY("White King X: ")
-		wkY = self.getXY("White King Y: ")
-		wrX = self.getXY("White Rook X: ")
-		wrY = self.getXY("White Rook Y: ")
-		bkX = self.getXY("Black King X: ")
-		bkY = self.getXY("Black King Y: ")
+		#print("\nEnter the starting positions for each piece.")
+		#print("Valid values for X and Y are from 1-8.")
+		#wkX = self.getXY("White King X: ")
+		#wkY = self.getXY("White King Y: ")
+		#wrX = self.getXY("White Rook X: ")
+		#wrY = self.getXY("White Rook Y: ")
+		#bkX = self.getXY("Black King X: ")
+		#bkY = self.getXY("Black King Y: ")
 
 		# Get whether or not to use heuristicY
 		useHeuristicY = input("\nUse heuristicY for the Black player (Y/N)? ").upper()[:1]
