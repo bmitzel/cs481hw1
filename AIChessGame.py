@@ -13,6 +13,7 @@ class AIChessGame(object):
 		self.useHeuristicY = False
 		self.n = 0
 		self.players = []
+		self.lookahead = 5
 		#self.board is initialized inside self.start() function
 
 	def printError(self):
@@ -75,14 +76,15 @@ class AIChessGame(object):
 			bkY = 8
 			self.n = 35
 		else:
-			print("Using Test Case 1")
-			wkX = 5
-			wkY = 6
-			wrX = 8
-			wrY = 5
-			bkX = 6
-			bkY = 8
-			self.n = 35	
+			# Get the starting positions for all 3 pieces: White King, White Rook, Black King
+			print("\nEnter the starting positions for each piece.")
+			print("Valid values for X and Y are from 1-8.")
+			wkX = self.getXY("White King X: ")
+			wkY = self.getXY("White King Y: ")
+			wrX = self.getXY("White Rook X: ")
+			wrY = self.getXY("White Rook Y: ")
+			bkX = self.getXY("Black King X: ")
+			bkY = self.getXY("Black King Y: ")
 			
 		# Get the starting positions for all 3 pieces: White King, White Rook, Black King
 		#print("\nEnter the starting positions for each piece.")
@@ -133,8 +135,13 @@ class AIChessGame(object):
 		# Is there any cleanup to do before exiting? If not, delete this function.
 		pass
 
+class Piece(object):
+	def __init__(self, color, position):
+		self.color = color
+		self.position = position
 
-class WhitePlayer(Player):
+
+class WhitePlayer(Piece):
 	def __init__(self, kingPos, rookPos):
 		self.pieces = [King(Color["White"], kingPos), Rook(Color["White"], rookPos)]
 
@@ -146,16 +153,29 @@ class WhitePlayer(Player):
 
 	# Get best move using mini-max algorithm
 	def heuristicX(self, board):
-		graph = Graph(game.board)
+		#graph = Graph(board)
 		moves = []
 		if debugLegalMoves:
 			print("Drawing all legal moves for the White player...\n")
+
 		for piece in self.pieces:
 			moves.extend(piece.getLegalMoves(board))
-		graph.root.insert(moves)
+
+		#graph.root.insert(moves[0])
+
+		#for move in moves:
+		#	graph.insert(move)
+		#	print(graph)
+
+		#return updated board
+		return moves[random.randint(0, len(moves) - 1)]
 
 	def randomX(self, board):
 		moves = []
+		#include debugging of legal moves on both 
+		if debugLegalMoves:
+			print("Drawing all legal moves for the White player...\n")
+
 		for piece in self.pieces:
 			moves.extend(piece.getLegalMoves(board))
 		# Return a randomly-selected legal board move
@@ -168,6 +188,7 @@ class WhitePlayer(Player):
 			game.board = self.randomX(game.board)
 		else:
 			game.board = self.heuristicX(game.board)
+
 		for player in game.players:
 			player.updatePieces(game.board)
 
@@ -178,7 +199,7 @@ class WhitePlayer(Player):
 			if piece.color == Color["White"]:
 				self.pieces.append(piece)
 
-class BlackPlayer(Player):
+class BlackPlayer(Piece):
 	def __init__(self, kingPos):
 		self.pieces = [King(Color["Black"], kingPos)]
 
@@ -190,7 +211,13 @@ class BlackPlayer(Player):
 
 	# Get best move using mini-max algorithm
 	def heuristicY(self, board):
-		pass
+		moves = []
+		if debugLegalMoves:
+			print("Drawing all legal moves for the Black player...\n")
+		for piece in self.pieces:
+			moves.extend(piece.getLegalMoves(board))
+		# Return a randomly-selected legal board move
+		return moves[random.randint(0, len(moves) - 1)]	
 
 	# Get random move
 	def randomY(self, board):
@@ -209,6 +236,8 @@ class BlackPlayer(Player):
 			game.board = self.heuristicY(game.board)
 		else:
 			game.board = self.randomY(game.board)
+
+
 		for player in game.players:
 			player.updatePieces(game.board)
 
@@ -249,7 +278,8 @@ class King(Piece):
 			occupied = list(board.occupied)
 			occupied.remove(self.position)
 		else:
-			occupied = [] # This is a shortcut because the Black king can capture the White rook
+			occupied = [] 
+		# This is a shortcut because the Black king can capture the White rook
 		# Generate all the legal moves from the current position
 		# Add each new board object to the list of moves
 		for y in range(min(8, self.position.y + 1), max(0, self.position.y - 2), -1):
@@ -388,6 +418,7 @@ class Board(object):
 		# add pieces to squares table
 		for piece in self.pieces:
 			self.squares[piece.position.x][piece.position.y] = piece
+
 		self.whiteAttacks = []
 		self.blackAttacks = []
 		self.occupied = []
@@ -424,6 +455,20 @@ class Board(object):
 				self.blackAttacks = [piece.position.tl(), piece.position.t(), piece.position.tr(),
 					piece.position.l(), piece.position.r(),
 					piece.position.bl(), piece.position.b(), piece.position.br()]
+
+	# List border positions as under attack
+	def calcBorderPositions(self):
+		borderPositions = []
+		for y in range (10):
+			borderPositions.append(Position(0 , y))
+		for x in range (1 , 10):
+			borderPositions.append(Position(x , 9))
+		for y in range (8, -1, -1):
+			borderPositions.append(Position(9 , y))
+		for x in range (8 , 0 , -1):
+			borderPositions.append(Position(x , 9))
+		print(borderPositions)
+
 
 	# Calculate which squares are occupied by both players
 	def calcOccupied(self):
