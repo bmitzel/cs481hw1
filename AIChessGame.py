@@ -3,7 +3,7 @@ import os, sys, random
 from Graph import Graph
 
 debugLegalMoves = False
-debugWhiteRandom = True
+debugWhiteRandom = False
 
 Color = {"White":0, "Black":1}
 
@@ -154,18 +154,52 @@ class WhitePlayer(Piece):
 	# Get best move using mini-max algorithm
 	def heuristicX(self, board):
 		#graph = Graph(board)
+		print("In Heuristic X")
+
+
 		moves = []
 		if debugLegalMoves:
 			print("Drawing all legal moves for the White player...\n")
 
+		blackOccupancy = list(board.occupied)
 		for piece in self.pieces:
-			moves.extend(piece.getLegalMoves(board))
+			print(piece, piece.position)
+			blackOccupancy.remove(piece.position)
+			pieceMoves = piece.getLegalMoves(board)
 
+			if str(piece) == "king":
+				for p in pieceMoves: 
+					#Proposed attack, king moves to space new space
+					print("Possible King attacks: ", p.occupied[0])
+					#Calculate the squares in danger. 3 is optimal for king vs king
+					danger_squares = set(p.whiteAttacks[0:8]).intersection(p.blackAttacks)
+					if(len(danger_squares) > 0):
+
+						print(len(danger_squares), danger_squares)
+
+			else:
+				for r in pieceMoves: 
+					#Proposed attack, rook moves to new space
+					print("Possible Rook attacks: ", r.occupied[1])
+					#Calculate the squares that the rook will be able to take the king.
+					danger_squares = r.occupied[2] in r.whiteAttacks[9:]
+					if(danger_squares):
+						print( danger_squares)
+
+			moves.extend(pieceMoves)
+
+			#comparing lists of white attacks with position of black king.
+			#for x in moves: 
+			#	print("White" , x.whiteAttacks)
+			#	print("Black" , x.blackAttacks)
+			#	danger_squares = set(x.whiteAttacks).intersection(x.blackAttacks)
+			#	print(danger_squares)
 		#graph.root.insert(moves[0])
 
 		#for move in moves:
 		#	graph.insert(move)
 		#	print(graph)
+		print("Black King: ", blackOccupancy)
 
 		#return updated board
 		return moves[random.randint(0, len(moves) - 1)]
@@ -247,169 +281,6 @@ class BlackPlayer(Piece):
 			if piece.color == Color["Black"]:
 				self.pieces.append(piece)
 
-class Piece(object):
-	def __init__(self, color, position):
-		self.color = color
-		self.position = position
-
-class King(Piece):
-	def __str__(self):
-			return "king"
-
-	def __repr__(self):
-		return self.__str__()
-
-	def getLabel(self):
-		if self.color == Color["White"]:
-			return "w"
-		else:
-			return "b"
-
-	# Returns a list of board objects corresponding to all the legal moves for the king
-	# Illegal moves:
-	#   - Moving into check
-	#   - Moving onto a square occupied by another piece of the same color
-	def getLegalMoves(self, board):
-		moves = []
-		# Get list of positions under attack by opposing player
-		attacked = board.underAttack((int(self.color) + 1) % 2)
-		# Get list of occupied squares and remove itself from the list
-		if self.color == Color["White"]:
-			occupied = list(board.occupied)
-			occupied.remove(self.position)
-		else:
-			occupied = [] 
-		# This is a shortcut because the Black king can capture the White rook
-		# Generate all the legal moves from the current position
-		# Add each new board object to the list of moves
-		for y in range(min(8, self.position.y + 1), max(0, self.position.y - 2), -1):
-			for x in range(max(1, self.position.x - 1), min(9, self.position.x + 2)):
-				newPosition = Position(x, y)
-				if ((self.position != newPosition) and (newPosition not in attacked) and
-						(newPosition not in occupied)):
-					newBoard = board.makeMove(Move(self, newPosition))
-					moves.append(newBoard)
-					if debugLegalMoves:
-						if self.color == Color["White"]:
-							print("White ", end = "")
-						else:
-							print("Black ", end = "")
-						print(str(self) + " to " + str(newPosition))
-						newBoard.draw()
-		return moves
-
-class Rook(Piece):
-	def __str__(self):
-		return "rook"
-
-	def __repr__(self):
-		return self.__str__()
-
-	def getLabel(self):
-		return "r"
-
-	# Returns a list of boards corresponding to all the legal moves for the rook
-	# Illegal moves:
-	#   - Moving onto or beyond a square occupied by another piece of the same color
-	#   - Capturing the opposing king
-	def getLegalMoves(self, board):
-		moves = []
-		# Get list of occupied squares and remove itself from the list
-		if self.color == Color["White"]:
-			occupied = list(board.occupied)
-			occupied.remove(self.position)
-		else:
-			occupied = []
-		print(occupied)
-		# Generate all the legal moves from the current position
-		# Add each new board object to the list of moves
-		# Move up
-		for y in range(self.position.y + 1, 9):
-			newPosition = Position(self.position.x, y)
-			if newPosition in occupied:
-				break
-			self.addMove(moves, board, newPosition)
-		# Move down
-		for y in range(self.position.y - 1, 0, -1):
-			newPosition = Position(self.position.x, y)
-			if newPosition in occupied:
-				break
-			self.addMove(moves, board, newPosition)
-		# Move left
-		for x in range(self.position.x - 1, 0, -1):
-			newPosition = Position(x, self.position.y)
-			if newPosition in occupied:
-				break
-			self.addMove(moves, board, newPosition)
-		# Move right
-		for x in range(self.position.x + 1, 9):
-			newPosition = Position(x, self.position.y)
-			if newPosition in occupied:
-				break
-			self.addMove(moves, board, newPosition)
-		return moves
-
-	# Create and add a new board object to the list of legal moves
-	def addMove(self, moves, board, position):
-		newBoard = board.makeMove(Move(self, position))
-		moves.append(newBoard)
-		if debugLegalMoves:
-			print("White " + str(self) + " to " + str(position))
-			newBoard.draw()
-
-class Position(object):
-	def __init__(self, x, y):
-		self.x = x
-		self.y = y
-
-	def __str__(self):
-		return "(" + str(self.x) + ", " + str(self.y) + ")"
-
-	def __repr__(self):
-		return self.__str__()
-
-	def __eq__(self, other):
-		return (self.x == other.x) and (self.y == other.y)
-
-	# The following 8 functions are for returning each of the 8 squares around the current position.
-	# These will be useful for determining check mate and stale mate.
-
-	# Returns position to the top-left
-	def tl(self):
-		return Position(self.x - 1, self.y + 1)
-
-	# Returns position to the top
-	def t(self):
-		return Position(self.x, self.y + 1)
-
-	# Returns position to the top-right
-	def tr(self):
-		return Position(self.x + 1, self.y + 1)
-
-	# Returns position to the left
-	def l(self):
-		return Position(self.x - 1, self.y)
-
-	# Returns position to the right
-	def r(self):
-		return Position(self.x + 1, self.y)
-
-	# Returns position to the bottom-left
-	def bl(self):
-		return Position(self.x - 1, self.y - 1)
-
-	# Returns position to the bottom
-	def b(self):
-		return Position(self.x, self.y - 1)
-
-	# Returns position to the bottom-right
-	def br(self):
-		return Position(self.x + 1, self.y - 1)
-
-class Move(object):
-	def __init__(self, piece, position):
-		self.piece = piece
-		self.position = position
 
 class Board(object):
 	def __init__(self, whitePieces, blackPieces):
@@ -475,6 +346,7 @@ class Board(object):
 		self.occupied = []
 		for piece in self.pieces:
 			self.occupied.append(piece.position)
+		
 
 	# Draw the current game board and pause
 	def draw(self):
@@ -537,4 +409,177 @@ class Board(object):
 				else:
 					newBlackPieces.append(King(Color["Black"], destination))
 		return Board(newWhitePieces, newBlackPieces)
-	
+
+
+class Piece(object):
+	def __init__(self, color, position):
+		self.color = color
+		self.position = position
+
+class King(Piece):
+	def __str__(self):
+			return "king"
+
+	def __repr__(self):
+		return self.__str__()
+
+	def getLabel(self):
+		if self.color == Color["White"]:
+			return "w"
+		else:
+			return "b"
+
+	# Returns a list of board objects corresponding to all the legal moves for the king
+	# Illegal moves:
+	#   - Moving into check
+	#   - Moving onto a square occupied by another piece of the same color
+	def getLegalMoves(self, board):
+		moves = []
+		# Get list of positions under attack by opposing player
+		attacked = board.underAttack((int(self.color) + 1) % 2)
+
+		# Get list of occupied squares and remove itself from the list
+		if self.color == Color["White"]:
+			occupied = list(board.occupied)
+			occupied.remove(self.position)
+		else:
+			occupied = [] 
+		# This is a shortcut because the Black king can capture the White rook
+		# Generate all the legal moves from the current position
+		# Add each new board object to the list of moves
+		for y in range(min(8, self.position.y + 1), max(0, self.position.y - 2), -1):
+			for x in range(max(1, self.position.x - 1), min(9, self.position.x + 2)):
+				newPosition = Position(x, y)
+				if ((self.position != newPosition) and (newPosition not in attacked) and
+						(newPosition not in occupied)):
+					newBoard = board.makeMove(Move(self, newPosition))
+					moves.append(newBoard)
+
+					if debugLegalMoves:
+						if self.color == Color["White"]:
+							print("White ", end = "")
+						else:
+							print("Black ", end = "")
+						print(str(self) + " to " + str(newPosition))
+						newBoard.draw()
+		return moves
+
+class Rook(Piece):
+	def __str__(self):
+		return "rook"
+
+	def __repr__(self):
+		return self.__str__()
+
+	def getLabel(self):
+		return "r"
+
+	# Returns a list of boards corresponding to all the legal moves for the rook
+	# Illegal moves:
+	#   - Moving onto or beyond a square occupied by another piece of the same color
+	#   - Capturing the opposing king
+	def getLegalMoves(self, board):
+		moves = []
+		# Get list of occupied squares and remove itself from the list
+		if self.color == Color["White"]:
+			occupied = list(board.occupied)
+			occupied.remove(self.position)
+		else:
+			occupied = []
+		
+		#shows other piece positions
+		#print(occupied)
+		
+		# Generate all the legal moves from the current position
+		# Add each new board object to the list of moves
+		# Move up
+		for y in range(self.position.y + 1, 9):
+			newPosition = Position(self.position.x, y)
+			if newPosition in occupied:
+				break
+			self.addMove(moves, board, newPosition)
+		# Move down
+		for y in range(self.position.y - 1, 0, -1):
+			newPosition = Position(self.position.x, y)
+			if newPosition in occupied:
+				break
+			self.addMove(moves, board, newPosition)
+		# Move left
+		for x in range(self.position.x - 1, 0, -1):
+			newPosition = Position(x, self.position.y)
+			if newPosition in occupied:
+				break
+			self.addMove(moves, board, newPosition)
+		# Move right
+		for x in range(self.position.x + 1, 9):
+			newPosition = Position(x, self.position.y)
+			if newPosition in occupied:
+				break
+			self.addMove(moves, board, newPosition)
+		return moves
+
+	# Create and add a new board object to the list of legal moves
+	def addMove(self, moves, board, position):
+		newBoard = board.makeMove(Move(self, position))
+		moves.append(newBoard)
+		if debugLegalMoves:
+			print("White " + str(self) + " to " + str(position))
+			newBoard.draw()
+
+class Position(object):
+	def __init__(self, x, y):
+		self.x = x
+		self.y = y
+
+	def __str__(self):
+		return "(" + str(self.x) + ", " + str(self.y) + ")"
+
+	def __hash__(self):
+		#return hash(tuple(self.__str__()))
+		return hash(self.__str__())
+
+	def __repr__(self):
+		return self.__str__()
+
+	def __eq__(self, other):
+		return (self.x == other.x) and (self.y == other.y)
+
+	# The following 8 functions are for returning each of the 8 squares around the current position.
+	# These will be useful for determining check mate and stale mate.
+
+	# Returns position to the top-left
+	def tl(self):
+		return Position(self.x - 1, self.y + 1)
+
+	# Returns position to the top
+	def t(self):
+		return Position(self.x, self.y + 1)
+
+	# Returns position to the top-right
+	def tr(self):
+		return Position(self.x + 1, self.y + 1)
+
+	# Returns position to the left
+	def l(self):
+		return Position(self.x - 1, self.y)
+
+	# Returns position to the right
+	def r(self):
+		return Position(self.x + 1, self.y)
+
+	# Returns position to the bottom-left
+	def bl(self):
+		return Position(self.x - 1, self.y - 1)
+
+	# Returns position to the bottom
+	def b(self):
+		return Position(self.x, self.y - 1)
+
+	# Returns position to the bottom-right
+	def br(self):
+		return Position(self.x + 1, self.y - 1)
+
+class Move(object):
+	def __init__(self, piece, position):
+		self.piece = piece
+		self.position = position
