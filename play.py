@@ -32,8 +32,10 @@ def play(game):
 	for n in range(game.n):
 
 		for player in game.players:
+
 			# player.move() (this function both makes and prints the move e.g. "Rook to (1, 1)")
-			player.move(game)
+			player.movePlayer(game)
+
 			game.printBoard()
 			# check for stale mate and check mate
 			#   if so, print the result

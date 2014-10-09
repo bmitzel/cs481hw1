@@ -133,8 +133,6 @@ class AIChessGame(object):
 		# Is there any cleanup to do before exiting? If not, delete this function.
 		pass
 
-class Player(object):
-	pass
 
 class WhitePlayer(Player):
 	def __init__(self, kingPos, rookPos):
@@ -164,7 +162,7 @@ class WhitePlayer(Player):
 		return moves[random.randint(0, len(moves) - 1)]
 
 	# Make a move for the White player
-	def move(self, game):
+	def movePlayer(self, game):
 		# Get the new board from heuristicX and update the player's pieces
 		if debugWhiteRandom:
 			game.board = self.randomX(game.board)
@@ -205,7 +203,7 @@ class BlackPlayer(Player):
 		return moves[random.randint(0, len(moves) - 1)]
 
 	# Make a move for the Black player
-	def move(self, game):
+	def movePlayer(self, game):
 		# Get the new board from heuristicY or randomY and update the player's pieces
 		if game.useHeuristicY:
 			game.board = self.heuristicY(game.board)
