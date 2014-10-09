@@ -156,50 +156,53 @@ class WhitePlayer(Piece):
 		#graph = Graph(board)
 		print("In Heuristic X")
 
-
 		moves = []
-		if debugLegalMoves:
-			print("Drawing all legal moves for the White player...\n")
-
 		blackOccupancy = list(board.occupied)
+
 		for piece in self.pieces:
 			print(piece, piece.position)
 			blackOccupancy.remove(piece.position)
 			pieceMoves = piece.getLegalMoves(board)
+			#moves.extend(pieceMoves)
 
 			if str(piece) == "king":
 				for p in pieceMoves: 
 					#Proposed attack, king moves to space new space
 					print("Possible King attacks: ", p.occupied[0])
+
 					#Calculate the squares in danger. 3 is optimal for king vs king
-					danger_squares = set(p.whiteAttacks[0:8]).intersection(p.blackAttacks)
-					if(len(danger_squares) > 0):
+					king_danger_squares = set(p.whiteAttacks[0:8]).intersection(p.blackAttacks)
 
-						print(len(danger_squares), danger_squares)
+					#Only add the optimal squares to the move list.
+					if(len(king_danger_squares) > 2):
+						moves.append(p)
+						print(len(moves), len(king_danger_squares), king_danger_squares)
+						return moves[random.randint(0, len(moves) - 1)]
 
-			else:
+			elif str(piece) == "rook":
 				for r in pieceMoves: 
+					
 					#Proposed attack, rook moves to new space
 					print("Possible Rook attacks: ", r.occupied[1])
+
 					#Calculate the squares that the rook will be able to take the king.
 					danger_squares = r.occupied[2] in r.whiteAttacks[9:]
-					if(danger_squares):
-						print( danger_squares)
 
-			moves.extend(pieceMoves)
+					#Calculate to move if black king can take rook
+					danger_defense = r.occupied[1] in r.blackAttacks
+					print("DANGER", danger_defense, piece, r.occupied[1])
+					
+					if(danger_defense):
+						moves.append(r)
+						print("GTFO")
+					elif(danger_squares):
+						moves.append(r)
+						print(len(moves), "offense" , danger_squares)
+						return moves[random.randint(0, len(moves) - 1)]
+						
 
-			#comparing lists of white attacks with position of black king.
-			#for x in moves: 
-			#	print("White" , x.whiteAttacks)
-			#	print("Black" , x.blackAttacks)
-			#	danger_squares = set(x.whiteAttacks).intersection(x.blackAttacks)
-			#	print(danger_squares)
-		#graph.root.insert(moves[0])
 
-		#for move in moves:
-		#	graph.insert(move)
-		#	print(graph)
-		print("Black King: ", blackOccupancy)
+		print("Black King: ", blackOccupancy, len(moves))
 
 		#return updated board
 		return moves[random.randint(0, len(moves) - 1)]
@@ -245,11 +248,34 @@ class BlackPlayer(Piece):
 
 	# Get best move using mini-max algorithm
 	def heuristicY(self, board):
+		print("In Heuristic Y")
+
 		moves = []
 		if debugLegalMoves:
 			print("Drawing all legal moves for the Black player...\n")
+
+		whiteOccupancy = list(board.occupied)
 		for piece in self.pieces:
-			moves.extend(piece.getLegalMoves(board))
+			print(piece, piece.position)
+			whiteOccupancy.remove(piece.position)
+			pieceMoves = piece.getLegalMoves(board)
+
+			if str(piece) == "king":
+				for p in pieceMoves: 
+					#Proposed attack, king moves to space new space
+					print("Possible King defends: ", p.occupied[2])
+					#Calculate the squares in danger. 3 is optimal for king vs king
+					danger_squares = set(p.whiteAttacks).intersection(p.blackAttacks)
+					
+
+					#getting pretty close to death.
+					if(len(danger_squares) < 100):
+						moves.append(p)
+						print(len(danger_squares), danger_squares)
+
+
+
+			#moves.extend(pieceMoves)
 		# Return a randomly-selected legal board move
 		return moves[random.randint(0, len(moves) - 1)]	
 
