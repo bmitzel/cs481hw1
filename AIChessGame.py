@@ -122,8 +122,15 @@ class AIChessGame(object):
 		self.board = Board(self.players[0].pieces, self.players[1].pieces)
 
 	# Returns true if the game has ended in a check mate
-	def isCheckMate(self):
-		pass
+	def isCheckMate(self, BlackPlayer):
+		self.result = ""
+		if moves == []:
+			if King.getLegalMoves in attacked:
+				print "Checkmate"
+				result = "Checkmate"
+			else
+				print "Stalemate"
+				result = "Stalemate"	
 
 	# Returns true if the game has ended in a stale mate
 	def isStaleMate(self):
