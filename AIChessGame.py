@@ -10,6 +10,7 @@ BoardState = {"None":0, "Checkmate":1, "Stalemate":2}
 
 class AIChessGame(object):
 	def __init__(self):
+		self.lookAhead = 2
 		self.testCase = 0
 		self.useHeuristicY = False
 		self.n = 0
