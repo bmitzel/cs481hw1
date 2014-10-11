@@ -284,7 +284,6 @@ class Rook(Piece):
 			occupied.remove(self.position)
 		else:
 			occupied = []
-		print(occupied)
 		# Generate all the legal moves from the current position
 		# Add each new board object to the list of moves
 		# Move up
