@@ -411,6 +411,7 @@ class Board(object):
 					for y in range(10):
 						if y != piece.position.y:
 							self.whiteAttacks.append(Position(piece.position.x, y))
+		self.whiteAttacks.extend(self.calcBorderPositions())
 
 	# Calculate which squares are under attack by the Black player
 	def calcBlackAttacks(self):
@@ -419,6 +420,21 @@ class Board(object):
 				self.blackAttacks = [piece.position.tl(), piece.position.t(), piece.position.tr(),
 					piece.position.l(), piece.position.r(),
 					piece.position.bl(), piece.position.b(), piece.position.br()]
+		self.blackAttacks.extend(self.calcBorderPositions())
+
+	# List border positions as under attack
+	def calcBorderPositions(self):
+		borderPositions = []
+		for y in range (10):
+			borderPositions.append(Position(0 , y))
+		for x in range (1 , 10):
+			borderPositions.append(Position(x , 9))
+		for y in range (8, -1, -1):
+			borderPositions.append(Position(9 , y))
+		for x in range (8 , 0 , -1):
+			borderPositions.append(Position(x , 0))
+		print(borderPositions)
+		return borderPositions
 
 	# Calculate which squares are occupied by both players
 	def calcOccupied(self):
