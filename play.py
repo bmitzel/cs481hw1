@@ -37,13 +37,12 @@ def play(game):
 				sys.exit(0)
 			else:
 				# player.move() (this function both makes and prints the move e.g. "Rook to (1, 1)")
-				player.move(game)
+				player.movePlayer(game)
 				game.printboard()
 				# check for stale mate and check mate
 				#   if so, print the result
 				#   return
 				# pause
-					
 
 # Begins program execution
 if __name__ == "__main__":
