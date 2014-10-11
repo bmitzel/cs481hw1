@@ -35,7 +35,7 @@ def play(game):
 			# End the game if check mate or stale mate
 			game.board.calcBoardState()
 			if game.board.state != BoardState["None"]:
-				print("Number of moves made: " + str(n))
+				print("Number of moves made: " + str(n+1))
 				if game.board.state == BoardState["Checkmate"]:
 					print("Game result: Checkmate")
 				else:
@@ -46,7 +46,7 @@ def play(game):
 				player.movePlayer(game)
 				game.printBoard()
 
-	print("Numer of moves made: " + str(n))
+	print("Numer of moves made: " + str(n+1))
 	print("Game result: None")
 
 # Begins program execution
