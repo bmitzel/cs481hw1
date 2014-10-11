@@ -13,6 +13,8 @@ class AIChessGame(object):
 		self.useHeuristicY = False
 		self.n = 0
 		self.players = []
+		self.result = ""
+		self.color = 'Black'
 		#self.board is initialized inside self.start() function
 
 	def printError(self):
@@ -51,11 +53,11 @@ class AIChessGame(object):
 				pass
 
 		if self.testCase == 1:
-			wkX = 5
+			wkX = 8
 			wkY = 6
-			wrX = 8
-			wrY = 5
-			bkX = 6
+			wrX = 4
+			wrY = 8
+			bkX = 8
 			bkY = 8
 			self.n = 35
 		elif self.testCase == 2:
@@ -75,24 +77,27 @@ class AIChessGame(object):
 			bkY = 8
 			self.n = 35
 		else:
-			print("Using Test Case 1")
-			wkX = 5
-			wkY = 6
-			wrX = 8
-			wrY = 5
-			bkX = 6
-			bkY = 8
-			self.n = 35	
-			
-		# Get the starting positions for all 3 pieces: White King, White Rook, Black King
-		#print("\nEnter the starting positions for each piece.")
-		#print("Valid values for X and Y are from 1-8.")
-		#wkX = self.getXY("White King X: ")
-		#wkY = self.getXY("White King Y: ")
-		#wrX = self.getXY("White Rook X: ")
-		#wrY = self.getXY("White Rook Y: ")
-		#bkX = self.getXY("Black King X: ")
-		#bkY = self.getXY("Black King Y: ")
+			# Get the starting positions for all 3 pieces: White King, White Rook, Black King
+			print("\nEnter the starting positions for each piece.")
+			print("Valid values for X and Y are from 1-8.")
+			wkX = self.getXY("White King X: ")
+			wkY = self.getXY("White King Y: ")
+			wrX = self.getXY("White Rook X: ")
+			wrY = self.getXY("White Rook Y: ")
+			bkX = self.getXY("Black King X: ")
+			bkY = self.getXY("Black King Y: ")
+
+			# Get the max number of moves for each player
+			try:
+				self.n = int(input("\nEnter the max number of moves per player: "))
+			except ValueError:
+				self.n = 0
+			while (self.n < 1):
+				self.printError()
+				try:
+					self.n = int(input("Enter the max number of moves per player: "))
+				except ValueError:
+					pass
 
 		# Get whether or not to use heuristicY
 		useHeuristicY = input("\nUse heuristicY for the Black player (Y/N)? ").upper()[:1]
@@ -104,18 +109,6 @@ class AIChessGame(object):
 		else:
 			self.useHeuristicY = False
 
-		# Get the max number of moves for each player
-		try:
-			self.n = int(input("\nEnter the max number of moves per player: "))
-		except ValueError:
-			self.n = 0
-		while (self.n < 1):
-			self.printError()
-			try:
-				self.n = int(input("Enter the max number of moves per player: "))
-			except ValueError:
-				pass
-
 		# Create and initialize the players and the chess board
 		self.players = [WhitePlayer(Position(wkX, wkY), Position(wrX, wrY)),
 			BlackPlayer(Position(bkX, bkY))]
@@ -123,11 +116,17 @@ class AIChessGame(object):
 
 	# Returns true if the game has ended in a check mate
 	def isCheckMate(self):
-		pass
-
-	# Returns true if the game has ended in a stale mate
-	def isStaleMate(self):
-		pass
+		print('Test1')
+		if not King.getLegalMoves(self,self.board):
+			self.result = "Test2"
+			if BlackPlayer.King.getLegalMoves in attacked:
+				print("Checkmate")
+				self.result = "Checkmate"
+			else:
+				print("Stalemate")
+				self.result = "Stalemate"	
+		
+		return self.result
 
 	def end(self):
 		# Is there any cleanup to do before exiting? If not, delete this function.
@@ -160,8 +159,12 @@ class WhitePlayer(Player):
 		moves = []
 		for piece in self.pieces:
 			moves.extend(piece.getLegalMoves(board))
-		# Return a randomly-selected legal board move
-		return moves[random.randint(0, len(moves) - 1)]
+
+		if len(moves) > 0:
+			# Return a randomly-selected legal board move
+			return moves[random.randint(0, len(moves) - 1)]
+		else:
+			return moves
 
 	# Make a move for the White player
 	def move(self, game):
@@ -201,8 +204,12 @@ class BlackPlayer(Player):
 			print("Drawing all legal moves for the Black player...\n")
 		for piece in self.pieces:
 			moves.extend(piece.getLegalMoves(board))
-		# Return a randomly-selected legal board move
-		return moves[random.randint(0, len(moves) - 1)]
+		
+		if len(moves) > 0:
+			# Return a randomly-selected legal board move
+			return moves[random.randint(0, len(moves) - 1)]
+		else:
+			return moves
 
 	# Make a move for the Black player
 	def move(self, game):
@@ -292,7 +299,6 @@ class Rook(Piece):
 			occupied.remove(self.position)
 		else:
 			occupied = []
-		print(occupied)
 		# Generate all the legal moves from the current position
 		# Add each new board object to the list of moves
 		# Move up
