@@ -13,8 +13,6 @@ class AIChessGame(object):
 		self.useHeuristicY = False
 		self.n = 0
 		self.players = []
-		self.result = ""
-		self.color = 'Black'
 		#self.board is initialized inside self.start() function
 
 	def printError(self):
@@ -114,20 +112,6 @@ class AIChessGame(object):
 			BlackPlayer(Position(bkX, bkY))]
 		self.board = Board(self.players[0].pieces, self.players[1].pieces)
 
-	# Returns true if the game has ended in a check mate
-	def isCheckMate(self):
-		print('Test1')
-		if not King.getLegalMoves(self,self.board):
-			self.result = "Test2"
-			if BlackPlayer.King.getLegalMoves in attacked:
-				print("Checkmate")
-				self.result = "Checkmate"
-			else:
-				print("Stalemate")
-				self.result = "Stalemate"	
-		
-		return self.result
-
 	def end(self):
 		# Is there any cleanup to do before exiting? If not, delete this function.
 		pass
@@ -160,11 +144,8 @@ class WhitePlayer(Player):
 		for piece in self.pieces:
 			moves.extend(piece.getLegalMoves(board))
 
-		if len(moves) > 0:
-			# Return a randomly-selected legal board move
-			return moves[random.randint(0, len(moves) - 1)]
-		else:
-			return moves
+		# Return a randomly-selected legal board move
+		return moves[random.randint(0, len(moves) - 1)]
 
 	# Make a move for the White player
 	def move(self, game):
@@ -204,12 +185,9 @@ class BlackPlayer(Player):
 			print("Drawing all legal moves for the Black player...\n")
 		for piece in self.pieces:
 			moves.extend(piece.getLegalMoves(board))
-		
-		if len(moves) > 0:
-			# Return a randomly-selected legal board move
+
+		# Return a randomly-selected legal board move
 			return moves[random.randint(0, len(moves) - 1)]
-		else:
-			return moves
 
 	# Make a move for the Black player
 	def move(self, game):
@@ -399,6 +377,8 @@ class Board(object):
 		self.whiteAttacks = []
 		self.blackAttacks = []
 		self.occupied = []
+		self.boardStates = {"None":0, "Checkmate":1, "Stalemate":2} 
+		self.state = self.boardStates["None"]
 		self.update()
 
 	# Update which squares are currently under attack or occupied by both players
@@ -406,6 +386,7 @@ class Board(object):
 		self.calcWhiteAttacks()
 		self.calcBlackAttacks()
 		self.calcOccupied()
+		self.calcBoardState()
 
 	# Calculate which squares are under attack by the White player
 	def calcWhiteAttacks(self):
@@ -500,4 +481,15 @@ class Board(object):
 				else:
 					newBlackPieces.append(King(Color["Black"], destination))
 		return Board(newWhitePieces, newBlackPieces)
+
+	# Returns true if the game has ended in a check mate
+	def calcBoardState(self):
+		for piece in self.pieces:
+			if str(piece) == "king" and piece.color == Color["Black"]:
+				# Test if moves list is empty
+				if not piece.getLegalMoves(self):
+					if piece.position in self.whiteAttacks:
+						self.state = "Checkmate"
+					else:
+						self.state = "Stalemate"
 	
