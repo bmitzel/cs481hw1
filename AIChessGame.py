@@ -6,6 +6,7 @@ debugLegalMoves = False
 debugWhiteRandom = True
 
 Color = {"White":0, "Black":1}
+BoardState = {"None":0, "Checkmate":1, "Stalemate":2} 
 
 class AIChessGame(object):
 	def __init__(self):
@@ -75,24 +76,27 @@ class AIChessGame(object):
 			bkY = 8
 			self.n = 35
 		else:
-			print("Using Test Case 1")
-			wkX = 5
-			wkY = 6
-			wrX = 8
-			wrY = 5
-			bkX = 6
-			bkY = 8
-			self.n = 35	
-			
-		# Get the starting positions for all 3 pieces: White King, White Rook, Black King
-		#print("\nEnter the starting positions for each piece.")
-		#print("Valid values for X and Y are from 1-8.")
-		#wkX = self.getXY("White King X: ")
-		#wkY = self.getXY("White King Y: ")
-		#wrX = self.getXY("White Rook X: ")
-		#wrY = self.getXY("White Rook Y: ")
-		#bkX = self.getXY("Black King X: ")
-		#bkY = self.getXY("Black King Y: ")
+			# Get the starting positions for all 3 pieces: White King, White Rook, Black King
+			print("\nEnter the starting positions for each piece.")
+			print("Valid values for X and Y are from 1-8.")
+			wkX = self.getXY("White King X: ")
+			wkY = self.getXY("White King Y: ")
+			wrX = self.getXY("White Rook X: ")
+			wrY = self.getXY("White Rook Y: ")
+			bkX = self.getXY("Black King X: ")
+			bkY = self.getXY("Black King Y: ")
+
+			# Get the max number of moves for each player
+			try:
+				self.n = int(input("\nEnter the max number of moves per player: "))
+			except ValueError:
+				self.n = 0
+			while (self.n < 1):
+				self.printError()
+				try:
+					self.n = int(input("Enter the max number of moves per player: "))
+				except ValueError:
+					pass
 
 		# Get whether or not to use heuristicY
 		useHeuristicY = input("\nUse heuristicY for the Black player (Y/N)? ").upper()[:1]
@@ -103,18 +107,6 @@ class AIChessGame(object):
 			self.useHeuristicY = True
 		else:
 			self.useHeuristicY = False
-
-		# Get the max number of moves for each player
-		try:
-			self.n = int(input("\nEnter the max number of moves per player: "))
-		except ValueError:
-			self.n = 0
-		while (self.n < 1):
-			self.printError()
-			try:
-				self.n = int(input("Enter the max number of moves per player: "))
-			except ValueError:
-				pass
 
 		# Create and initialize the players and the chess board
 		self.players = [WhitePlayer(Position(wkX, wkY), Position(wrX, wrY)),
@@ -164,7 +156,7 @@ class WhitePlayer(Player):
 		return moves[random.randint(0, len(moves) - 1)]
 
 	# Make a move for the White player
-	def move(self, game):
+	def movePlayer(self, game):
 		# Get the new board from heuristicX and update the player's pieces
 		if debugWhiteRandom:
 			game.board = self.randomX(game.board)
@@ -205,7 +197,7 @@ class BlackPlayer(Player):
 		return moves[random.randint(0, len(moves) - 1)]
 
 	# Make a move for the Black player
-	def move(self, game):
+	def movePlayer(self, game):
 		# Get the new board from heuristicY or randomY and update the player's pieces
 		if game.useHeuristicY:
 			game.board = self.heuristicY(game.board)
@@ -238,12 +230,12 @@ class King(Piece):
 		else:
 			return "b"
 
-	# Returns a list of board objects corresponding to all the legal moves for the king
+	# Calculates a list of board objects corresponding to all the legal moves for the king
 	# Illegal moves:
 	#   - Moving into check
 	#   - Moving onto a square occupied by another piece of the same color
 	def getLegalMoves(self, board):
-		moves = []
+		legalMoves = []
 		# Get list of positions under attack by opposing player
 		attacked = board.underAttack((int(self.color) + 1) % 2)
 		# Get list of occupied squares and remove itself from the list
@@ -260,7 +252,7 @@ class King(Piece):
 				if ((self.position != newPosition) and (newPosition not in attacked) and
 						(newPosition not in occupied)):
 					newBoard = board.makeMove(Move(self, newPosition))
-					moves.append(newBoard)
+					legalMoves.append(newBoard)
 					if debugLegalMoves:
 						if self.color == Color["White"]:
 							print("White ", end = "")
@@ -268,7 +260,7 @@ class King(Piece):
 							print("Black ", end = "")
 						print(str(self) + " to " + str(newPosition))
 						newBoard.draw()
-		return moves
+		return legalMoves
 
 class Rook(Piece):
 	def __str__(self):
@@ -280,12 +272,12 @@ class Rook(Piece):
 	def getLabel(self):
 		return "r"
 
-	# Returns a list of boards corresponding to all the legal moves for the rook
+	# Calculates a list of board objects corresponding to all the legal moves for the rook
 	# Illegal moves:
 	#   - Moving onto or beyond a square occupied by another piece of the same color
 	#   - Capturing the opposing king
 	def getLegalMoves(self, board):
-		moves = []
+		legalMoves = []
 		# Get list of occupied squares and remove itself from the list
 		if self.color == Color["White"]:
 			occupied = list(board.occupied)
@@ -300,26 +292,26 @@ class Rook(Piece):
 			newPosition = Position(self.position.x, y)
 			if newPosition in occupied:
 				break
-			self.addMove(moves, board, newPosition)
+			self.addMove(legalMoves, board, newPosition)
 		# Move down
 		for y in range(self.position.y - 1, 0, -1):
 			newPosition = Position(self.position.x, y)
 			if newPosition in occupied:
 				break
-			self.addMove(moves, board, newPosition)
+			self.addMove(legalMoves, board, newPosition)
 		# Move left
 		for x in range(self.position.x - 1, 0, -1):
 			newPosition = Position(x, self.position.y)
 			if newPosition in occupied:
 				break
-			self.addMove(moves, board, newPosition)
+			self.addMove(legalMoves, board, newPosition)
 		# Move right
 		for x in range(self.position.x + 1, 9):
 			newPosition = Position(x, self.position.y)
 			if newPosition in occupied:
 				break
-			self.addMove(moves, board, newPosition)
-		return moves
+			self.addMove(legalMoves, board, newPosition)
+		return legalMoves
 
 	# Create and add a new board object to the list of legal moves
 	def addMove(self, moves, board, position):
@@ -393,6 +385,7 @@ class Board(object):
 		self.whiteAttacks = []
 		self.blackAttacks = []
 		self.occupied = []
+		self.state = BoardState["None"]
 		self.update()
 
 	# Update which squares are currently under attack or occupied by both players
@@ -432,6 +425,18 @@ class Board(object):
 		self.occupied = []
 		for piece in self.pieces:
 			self.occupied.append(piece.position)
+
+	# Calculates the current board state: none, checkmate, or stalemate
+	def calcBoardState(self):
+		for piece in self.pieces:
+			if str(piece) == "king" and piece.color == Color["Black"]:
+				# Test if moves list is empty
+				if not piece.getLegalMoves(self):
+					if piece.position in self.whiteAttacks:
+						self.state = BoardState["Checkmate"]
+					else:
+						self.state = BoardState["Stalemate"]
+				break;
 
 	# Draw the current game board and pause
 	def draw(self):

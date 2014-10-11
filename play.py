@@ -1,5 +1,7 @@
 #!/usr/bin/env python
+import os, sys
 from AIChessGame import AIChessGame
+from AIChessGame import BoardState
 
 # Prints the parameters at the start of a new game
 def printStart(players, useHeuristicY):
@@ -28,18 +30,20 @@ def printStart(players, useHeuristicY):
 def play(game):
 	printStart(game.players, game.useHeuristicY)
 	game.printBoard()
-	# Disabling n for now and just using 1 move per player
 	for n in range(game.n):
-	#for n in range(1):
 		for player in game.players:
-			# player.move() (this function both makes and prints the move e.g. "Rook to (1, 1)")
-			player.move(game)
-			game.printBoard()
-			# check for stale mate and check mate
-			#   if so, print the result
-			#   return
-			# pause
-			pass
+			# End the game if check mate or stale mate
+			game.board.calcBoardState()
+			if game.board.state != BoardState["None"]:
+				if game.board.state == BoardState["Checkmate"]:
+					print("Checkmate")
+				else:
+					print("Stalemate")
+				sys.exit(0)
+			# If the game is not over, make the next move and draw the board
+			else:
+				player.movePlayer(game)
+				game.printBoard()
 
 # Begins program execution
 if __name__ == "__main__":
