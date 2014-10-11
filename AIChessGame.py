@@ -158,51 +158,42 @@ class WhitePlayer(Piece):
 
 		moves = []
 		blackOccupancy = list(board.occupied)
-
+		king_danger_squares = []
 		for piece in self.pieces:
 			print(piece, piece.position)
 			blackOccupancy.remove(piece.position)
 			pieceMoves = piece.getLegalMoves(board)
-			#moves.extend(pieceMoves)
+			moves.extend(pieceMoves)
+
+
+			#king_danger_squares = set(p.whiteAttacks).intersection(p.blackAttacks)
+
 
 			if str(piece) == "king":
-				for p in pieceMoves: 
+				for k in pieceMoves: 
 					#Proposed attack, king moves to space new space
-					print("Possible King attacks: ", p.occupied[0])
+					print("Possible King attacks: ", k.occupied[0])
 
 					#Calculate the squares in danger. 3 is optimal for king vs king
-					king_danger_squares = set(p.whiteAttacks[0:8]).intersection(p.blackAttacks)
+					king_danger_squares.extend(list(set(k.whiteAttacks).intersection(k.blackAttacks)))
+					print(list(king_danger_squares))
+					
 
 					#Only add the optimal squares to the move list.
-					if(len(king_danger_squares) > 2):
-						moves.append(p)
-						print(len(moves), len(king_danger_squares), king_danger_squares)
-						return moves[random.randint(0, len(moves) - 1)]
-
+					#if(len(king_danger_squares) > 2):
+					#	moves.append(p)
+					#	print(len(moves), len(king_danger_squares), king_danger_squares)
+					#	return moves[random.randint(0, len(moves) - 1)]
 			elif str(piece) == "rook":
-				for r in pieceMoves: 
-					
-					#Proposed attack, rook moves to new space
-					print("Possible Rook attacks: ", r.occupied[1])
+				for r in pieceMoves:
+					print("Possible Rook Attacks: ", r.occupied[1])
 
-					#Calculate the squares that the rook will be able to take the king.
-					danger_squares = r.occupied[2] in r.whiteAttacks[9:]
-
-					#Calculate to move if black king can take rook
-					danger_defense = r.occupied[1] in r.blackAttacks
-					print("DANGER", danger_defense, piece, r.occupied[1])
-					
-					if(danger_defense):
-						moves.append(r)
-						print("GTFO")
-					elif(danger_squares):
-						moves.append(r)
-						print(len(moves), "offense" , danger_squares)
-						return moves[random.randint(0, len(moves) - 1)]
-						
+					king_danger_squares.extend(list(set(r.whiteAttacks).intersection(r.blackAttacks)))
+					print(list(king_danger_squares))
 
 
-		print("Black King: ", blackOccupancy, len(moves))
+
+		#print("Black King: ", blackOccupancy, len(moves))
 
 		#return updated board
 		return moves[random.randint(0, len(moves) - 1)]
