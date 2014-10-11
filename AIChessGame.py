@@ -158,24 +158,30 @@ class WhitePlayer(Piece):
 
 		moves = []
 		blackOccupancy = list(board.occupied)
-		king_danger_squares = []
+		
 		for piece in self.pieces:
 			print(piece, piece.position)
 			blackOccupancy.remove(piece.position)
 			pieceMoves = piece.getLegalMoves(board)
 			moves.extend(pieceMoves)
-
+			#king_danger_squares = []
 
 			#king_danger_squares = set(p.whiteAttacks).intersection(p.blackAttacks)
 
 
 			if str(piece) == "king":
 				for k in pieceMoves: 
+					king_danger_squares = []
 					#Proposed attack, king moves to space new space
 					print("Possible King attacks: ", k.occupied[0])
 
 					#Calculate the squares in danger. 3 is optimal for king vs king
-					king_danger_squares.extend(list(set(k.whiteAttacks).intersection(k.blackAttacks)))
+					currentLegals = list(set(k.whiteAttacks).intersection(k.blackAttacks))
+
+					for attacks in currentLegals:
+						if str(attacks) not in king_danger_squares:
+							king_danger_squares.append(str(attacks))
+
 					print(list(king_danger_squares))
 					
 
@@ -185,11 +191,19 @@ class WhitePlayer(Piece):
 					#	print(len(moves), len(king_danger_squares), king_danger_squares)
 					#	return moves[random.randint(0, len(moves) - 1)]
 			elif str(piece) == "rook":
-				for r in pieceMoves:
-					print("Possible Rook Attacks: ", r.occupied[1])
 
-					king_danger_squares.extend(list(set(r.whiteAttacks).intersection(r.blackAttacks)))
+				for r in pieceMoves:
+					king_danger_squares = []
+					print("Possible Rook Attacks: ", r.occupied[1])
+					currentLegals = list(set(r.whiteAttacks).intersection(r.blackAttacks))
+
+					for attacks in currentLegals:
+						if str(attacks) not in king_danger_squares:
+							king_danger_squares.append(str(attacks))
+
 					print(list(king_danger_squares))
+					#king_danger_squares.extend(list(set(r.whiteAttacks).intersection(r.blackAttacks)))
+					#print(list(king_danger_squares))
 
 
 
