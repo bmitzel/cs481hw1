@@ -32,14 +32,21 @@ def play(game):
 	for n in range(game.n):
 	#for n in range(1):
 		for player in game.players:
-			# player.move() (this function both makes and prints the move e.g. "Rook to (1, 1)")
-			player.move(game)
-			game.printBoard()
-			# check for stale mate and check mate
-			#   if so, print the result
-			#   return
-			# pause
-			pass
+			print('BOOM')
+			print(game.isCheckMate())
+			if not game.isCheckMate():
+				print('BOOM')
+				# player.move() (this function both makes and prints the move e.g. "Rook to (1, 1)")
+				player.move(game)
+				game.printBoard()
+				# check for stale mate and check mate
+				#   if so, print the result
+				#   return
+				# pause
+			else:
+				print(game.isCheckMate())
+				break
+					
 
 # Begins program execution
 if __name__ == "__main__":
