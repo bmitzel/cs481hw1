@@ -127,23 +127,10 @@ class AIChessGame(object):
 		pass
 
 class Player(object):
-	pass
-
-class WhitePlayer(Player):
-	def __init__(self, kingPos, rookPos):
-		self.pieces = [King(Color["White"], kingPos), Rook(Color["White"], rookPos)]
-
-	def __str__(self):
-		return "White"
-
-	def __repr__(self):
-		return self.__str__()
-
 	# Generate the game graph from the current board state
-	def makeGraph(self, currentBoard, maxDepth):
-		start = time.clock()
+	def makeGraph(self, currentPlayer, currentBoard, maxDepth):
 		# Insert the root node
-		gameGraph = Graph.Graph(Color["Black"], currentBoard)
+		gameGraph = Graph.Graph((currentPlayer + 1) % 2, currentBoard)
 		tempNode = gameGraph.root
 
 		# Generate the rest of the tree using iterative depth-first search algorithm
@@ -169,13 +156,49 @@ class WhitePlayer(Player):
 					stack.append(child)
 				# Add the completed node to the discovered list
 				discovered.append(tempNode)
-		elapsed = time.clock() - start
-		print("ELapsed time to generate the game graph: " + str(elapsed))
+		return gameGraph
+
+	# Finds the optimal move in the game graph using the mini-max algorithm
+	def minimax(self, graph, node, depth, maximize):
+		# If at max depth or a leaf node, return the heuristic value
+		if (depth == 0) or (not node.children):
+			return self.calculateHV(node.board)
+		# If at the root, initialize the best move to the first move
+		if graph.root == node:
+			graph.bestMove = node.children[0].board
+			# If there is only one possible move, we're done
+			if len(node.children == 1):
+				return None
+		# If it's the maximizing player's turn
+		if maximize:
+			bestValue = -9999999999
+			for child in node.children:
+				value = self.minimax(graph, child, depth - 1, False)
+				bestValue = max(bestValue, value)
+			return bestValue
+		# If it's the minimizing player's turn
+		else:
+			bestValue = 9999999999
+			for child in node.children:
+				value = self.minimax(graph, child, depth - 1, True)
+				bestValue = min(bestValue, value)
+			return bestValue
+
+class WhitePlayer(Player):
+	def __init__(self, kingPos, rookPos):
+		self.pieces = [King(Color["White"], kingPos), Rook(Color["White"], rookPos)]
+
+	def __str__(self):
+		return "White"
+
+	def __repr__(self):
+		return self.__str__()
 
 	# Get best move using mini-max algorithm
 	def heuristicX(self, board, lookahead):
 		#print("In Heuristic X")
-		self.makeGraph(board, lookahead)
+		gameGraph = self.makeGraph(Color["White"], board, lookahead)
+		self.minimax(gameGraph, gameGraph.root, lookahead, True)
 
 		moves = []
 		weightedMoves = []
