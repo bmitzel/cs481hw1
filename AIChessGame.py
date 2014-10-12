@@ -3,7 +3,7 @@ import os, sys, random
 from Graph import Graph
 
 debugLegalMoves = False
-debugWhiteRandom = True
+debugWhiteRandom = False
 
 Color = {"White":0, "Black":1}
 BoardState = {"None":0, "Checkmate":1, "Stalemate":2} 
@@ -141,16 +141,54 @@ class WhitePlayer(Player):
 
 	# Get best move using mini-max algorithm
 	def heuristicX(self, board):
-		graph = Graph(game.board)
+		#graph = Graph(board)
+		print("In Heuristic X")
+
 		moves = []
-		if debugLegalMoves:
-			print("Drawing all legal moves for the White player...\n")
+		bestMoves = []
+		bestestMoves = []
+		blackOccupancy = list(board.occupied)
+		
 		for piece in self.pieces:
-			moves.extend(piece.getLegalMoves(board))
-		graph.root.insert(moves)
+			print(piece, piece.position)
+			blackOccupancy.remove(piece.position)
+			pieceMoves = piece.getLegalMoves(board)
+			moves.extend(pieceMoves)
+
+			for k in pieceMoves: 
+				king_danger_squares = []
+				#Proposed attack, king moves to space new space
+				print("Possible King attacks: ", k.occupied[0])
+
+				#Calculate the squares in danger
+				currentLegals = list(set(k.whiteAttacks).intersection(k.blackAttacks))
+
+				for attacks in currentLegals:
+					if str(attacks) not in king_danger_squares:
+						king_danger_squares.append(str(attacks))
+
+				print(list(king_danger_squares))
+
+			for weight in bestMoves:
+				heuristicValue = list(set(weight.whiteAttacks).intersection(weight.blackAttacks))
+				#print("herusitc: ", len(heuristicValue), heuristicValue)
+				weightedMove = [len(heuristicValue), heuristicValue, weight]
+				print("heuristic: " , weightedMove[0], weightedMove[1])
+				bestestMoves.append(weightedMove)
+
+
+		print("Black King: ", blackOccupancy, len(bestMoves))
+		print("Black King: ", blackOccupancy, len(moves))
+
+		#return updated board
+		return moves[random.randint(0, len(moves) - 1)]
 
 	def randomX(self, board):
 		moves = []
+		#include debugging of legal moves on both 
+		if debugLegalMoves:
+			print("Drawing all legal moves for the White player...\n")
+
 		for piece in self.pieces:
 			moves.extend(piece.getLegalMoves(board))
 		# Return a randomly-selected legal board move
@@ -185,7 +223,38 @@ class BlackPlayer(Player):
 
 	# Get best move using mini-max algorithm
 	def heuristicY(self, board):
-		pass
+		print("In Heuristic Y")
+
+		moves = []
+		if debugLegalMoves:
+			print("Drawing all legal moves for the Black player...\n")
+
+		whiteOccupancy = list(board.occupied)
+		for piece in self.pieces:
+			pieceMoves = piece.getLegalMoves(board)
+			king_danger_squares = []
+			moves.extend(pieceMoves)
+
+			for k in pieceMoves: 
+				king_danger_squares = []
+				#Proposed attack, king moves to space new space
+				print("Possible King attacks: ", k.occupied[0])
+
+				#Calculate the squares in danger. 3 is optimal for king vs king
+				currentLegals = list(set(k.whiteAttacks).intersection(k.blackAttacks))
+
+				for attacks in currentLegals:
+					if str(attacks) not in king_danger_squares:
+						king_danger_squares.append(str(attacks))
+
+				print(list(king_danger_squares))
+					
+
+
+
+			#moves.extend(pieceMoves)
+		# Return a randomly-selected legal board move
+		return moves[random.randint(0, len(moves) - 1)]	
 
 	# Get random move
 	def randomY(self, board):

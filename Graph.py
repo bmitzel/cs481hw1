@@ -1,15 +1,16 @@
 #!/usr/bin/env python
-State = {"MIN":0, "MAX":1}
+MinMax = {"MIN":0, "MAX":1}
 
 class Graph(object):
 	def __init__(self, start):
-		self.root = Node(start, State["MAX"])
+		#self.root = Node(start, MinMax["MAX"])
 
 class Node(object):
-	def __init__(self, board, state):
+	def __init__(self, nodeType, text, board, value):
+		self.type = nodeType
+		self.description = text
 		self.board = board
-		self.state = state
-		self.value = 0
+		self.value = value
 		self.children = []
 
 	def insert(self, board):
