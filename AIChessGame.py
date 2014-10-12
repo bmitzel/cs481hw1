@@ -158,7 +158,7 @@ class WhitePlayer(Piece):
 
 		moves = []
 		bestMoves = []
-
+		bestestMoves = []
 		blackOccupancy = list(board.occupied)
 		
 		for piece in self.pieces:
@@ -207,10 +207,12 @@ class WhitePlayer(Piece):
 					#king_danger_squares.extend(list(set(r.whiteAttacks).intersection(r.blackAttacks)))
 					#print(list(king_danger_squares))
 
-			for weight in bestMoves:
-
+			for weight in moves:
 				heuristicValue = list(set(weight.whiteAttacks).intersection(weight.blackAttacks))
-				print("herusitc: ", len(heuristicValue), heuristicValue)
+				#print("herusitc: ", len(heuristicValue), heuristicValue)
+				weightedMove = [len(heuristicValue), heuristicValue, weight]
+				bestestMoves.append(weight)
+				print("heuristic: " , weightedMove[0], weightedMove[1])
 
 		print("Black King: ", blackOccupancy, len(bestMoves))
 		print("Black King: ", blackOccupancy, len(moves))
