@@ -323,50 +323,56 @@ class BlackPlayer(Player):
 
 	# Get best move using mini-max algorithm
 	def heuristicY(self, board, lookahead):
-		#print("In Heuristic Y")
+		gameGraph = self.makeGraph(Color["Black"], board, lookahead)
+		self.minimax(gameGraph, gameGraph.root, lookahead, True, -9999999999, 9999999999)
+		return gameGraph.bestMove
 
-		borderPositions = []
-		for y in range (10):
-			borderPositions.append(Position(1 , y))
-		for x in range (1 , 10):
-			borderPositions.append(Position(x , 8))
-		for y in range (8, -1, -1):
-			borderPositions.append(Position(8 , y))
-		for x in range (8 , 0 , -1):
-			borderPositions.append(Position(x , 1))
+	def calculateHV(self, board):
+		# If the rook has been captured, return +infinity
+		if len(board.pieces) < 3:
+			return 9999999999
 
-		moves = []
-		if debugLegalMoves:
-			print("Drawing all legal moves for the Black player...\n")
+		# If the rook is under attack and not defended by the king, return +infinity
+		for piece in board.pieces:
+			if str(piece) == "king" and piece.color == Color["White"]:
+				wkPos = piece.position
+				wkDefense = [wkPos.tl(), wkPos.t(), wkPos.tr(),
+						wkPos.l(), wkPos.r(),
+						wkPos.bl(), wkPos.b(), wkPos.br()]
+		for piece in board.pieces:
+			if str(piece) == "rook":
+				rookPos = piece.position
+				if piece.position in board.blackAttacks and piece.position not in wkDefense:
+					return 9999999999
 
-		whiteOccupancy = list(board.occupied)
-		for piece in self.pieces:
-			pieceMoves = piece.getLegalMoves(board)
-			king_safer_squares = []
-			moves.extend(pieceMoves)
+		# If the board is in stale mate, return +infinity
+		board.calcBoardState()
+		if board.state == BoardState["Stalemate"]:
+			return 9999999999
 
-			for k in pieceMoves: 
-				king_safe_squares = []
-				#Proposed attack, king moves to space new space
-				#print("Possible King attacks: ", k.occupied[2])
+		# If the board is in check mate, return -infinity
+		if board.state == BoardState["Checkmate"]:
+			return -9999999999
 
-				k.blackAttacks.extend(borderPositions)
+		# Count twice the distance to the nearest board edge
+		# Since we want to prioritize staying away from board edges
+		for piece in board.pieces:
+			if str(piece) == "king" and piece.color == Color["Black"]:
+				bkPos = piece.position
+		minDistance = abs(bkPos.x - 1)
+		minDistance = min(abs(bkPos.x - 8), minDistance)
+		minDistance = min(abs(bkPos.y - 1), minDistance)
+		minDistance = min(abs(bkPos.y - 8), minDistance)
+		value = 2 * minDistance
 
-				#Calculate the squares in danger. 3 is optimal for king vs king
-				currentLegals = list(set(k.whiteAttacks).intersection(k.blackAttacks))
+		# Add the distance to the white king by number of moves
+		value = value + max(abs(bkPos.x - wkPos.x), abs(bkPos.y - wkPos.y))
 
-				for attacks in currentLegals:
-					if str(attacks) not in king_safe_squares:
-						king_safe_squares.append(str(attacks))
+		# Add 0 or 1 for the distance to the white rook by number of moves
+		if bkPos.x != rookPos.x and bkPos.y != rookPos.y:
+			value = value + 1
 
-				#print(list(king_safe_squares))
-					
-
-
-
-			#moves.extend(pieceMoves)
-		# Return a randomly-selected legal board move
-		return moves[random.randint(0, len(moves) - 1)]	
+		return value
 
 	# Get random move
 	def randomY(self, board):
