@@ -28,6 +28,7 @@ def printStart(players, useHeuristicY):
 
 # Plays a game of chess
 def play(game):
+	whiteMoves = 0
 	printStart(game.players, game.useHeuristicY)
 	game.printBoard()
 	for n in range(game.n):
@@ -35,7 +36,7 @@ def play(game):
 			# End the game if check mate or stale mate
 			game.board.calcBoardState()
 			if game.board.state != BoardState["None"]:
-				print("Number of moves made: " + str(n+1))
+				print("Number of moves made: " + str(whiteMoves))
 				if game.board.state == BoardState["Checkmate"]:
 					print("Game result: Checkmate")
 				else:
@@ -45,8 +46,10 @@ def play(game):
 			else:
 				player.movePlayer(game)
 				game.printBoard()
+				if str(player) == "White":
+					whiteMoves = whiteMoves + 1
 
-	print("Numer of moves made: " + str(n+1))
+	print("Numer of moves made: " + str(whiteMoves))
 	print("Game result: None")
 
 # Begins program execution
