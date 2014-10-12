@@ -251,10 +251,10 @@ class BlackPlayer(Piece):
 			for k in pieceMoves: 
 				king_danger_squares = []
 				#Proposed attack, king moves to space new space
-				print("Possible King attacks: ", k.occupied[0])
+				print("Possible King attacks: ", k.occupied[2])
 
 				#Calculate the squares in danger. 3 is optimal for king vs king
-				currentLegals = list(set(k.whiteAttacks).intersection(k.blackAttacks))
+				currentLegals = list(set(k.blackAttacks).intersection(k.whiteAttacks))
 
 				for attacks in currentLegals:
 					if str(attacks) not in king_danger_squares:
