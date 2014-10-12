@@ -163,6 +163,7 @@ class WhitePlayer(Player):
 				else:
 					print("Possible Rook attacks: ", k.occupied[1])
 				#Calculate the squares in danger
+				k.blackAttacks.append(blackOccupancy[0])
 				currentLegals = list(set(k.whiteAttacks).intersection(k.blackAttacks))
 
 				for attacks in currentLegals:
@@ -493,7 +494,7 @@ class Board(object):
 			if piece.color == Color["Black"]:
 				self.blackAttacks = [piece.position.tl(), piece.position.t(), piece.position.tr(),
 					piece.position.l(), piece.position.r(),
-					piece.position.bl(), piece.position.b(), piece.position.br(), piece.position]
+					piece.position.bl(), piece.position.b(), piece.position.br()]
 		#self.blackAttacks.extend(self.calcBorderPositions())
 
 	# List border positions as under attack
