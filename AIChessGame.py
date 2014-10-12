@@ -207,7 +207,7 @@ class WhitePlayer(Piece):
 
 
 
-		#print("Black King: ", blackOccupancy, len(moves))
+		print("Black King: ", blackOccupancy, len(moves))
 
 		#return updated board
 		return moves[random.randint(0, len(moves) - 1)]
@@ -261,22 +261,24 @@ class BlackPlayer(Piece):
 
 		whiteOccupancy = list(board.occupied)
 		for piece in self.pieces:
-			print(piece, piece.position)
-			whiteOccupancy.remove(piece.position)
 			pieceMoves = piece.getLegalMoves(board)
+			king_danger_squares = []
+			moves.extend(pieceMoves)
+			
+			for k in pieceMoves: 
+				king_danger_squares = []
+				#Proposed attack, king moves to space new space
+				print("Possible King attacks: ", k.occupied[0])
 
-			if str(piece) == "king":
-				for p in pieceMoves: 
-					#Proposed attack, king moves to space new space
-					print("Possible King defends: ", p.occupied[2])
-					#Calculate the squares in danger. 3 is optimal for king vs king
-					danger_squares = set(p.whiteAttacks).intersection(p.blackAttacks)
+				#Calculate the squares in danger. 3 is optimal for king vs king
+				currentLegals = list(set(k.whiteAttacks).intersection(k.blackAttacks))
+
+				for attacks in currentLegals:
+					if str(attacks) not in king_danger_squares:
+						king_danger_squares.append(str(attacks))
+
+				print(list(king_danger_squares))
 					
-
-					#getting pretty close to death.
-					if(len(danger_squares) < 100):
-						moves.append(p)
-						print(len(danger_squares), danger_squares)
 
 
 
