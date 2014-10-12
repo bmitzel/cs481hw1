@@ -4,6 +4,7 @@ MinMax = {"MIN":0, "MAX":1}
 class Graph(object):
 	def __init__(self, start):
 		#self.root = Node(start, MinMax["MAX"])
+		pass
 
 class Node(object):
 	def __init__(self, nodeType, text, board, value):

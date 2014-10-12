@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os, sys, random
-from Graph import Graph
+import Graph
 
 debugLegalMoves = False
 debugWhiteRandom = False
