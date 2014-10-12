@@ -188,7 +188,7 @@ class WhitePlayer(Piece):
 				print("heuristic: " , weightedMove[0], weightedMove[1])
 				bestestMoves.append(weightedMove)
 
-		print(bestestMoves[0].weightedMove[0])
+
 		print("Black King: ", blackOccupancy, len(bestMoves))
 		print("Black King: ", blackOccupancy, len(moves))
 
