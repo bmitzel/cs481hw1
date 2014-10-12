@@ -159,7 +159,7 @@ class Player(object):
 		return gameGraph
 
 	# Finds the optimal move in the game graph using the mini-max algorithm
-	def minimax(self, graph, node, depth, maximize):
+	def minimax(self, graph, node, depth, maximize, alpha, beta):
 		# If at max depth or a leaf node, return the heuristic value
 		if (depth == 0) or (not node.children):
 			return self.calculateHV(node.board)
@@ -167,22 +167,32 @@ class Player(object):
 		if graph.root == node:
 			graph.bestMove = node.children[0].board
 			# If there is only one possible move, we're done
-			if len(node.children == 1):
+			if len(node.children) == 1:
 				return None
-		# If it's the maximizing player's turn
+		# If it's the maximizing player's turn, return the highest value
 		if maximize:
-			bestValue = -9999999999
 			for child in node.children:
-				value = self.minimax(graph, child, depth - 1, False)
-				bestValue = max(bestValue, value)
-			return bestValue
-		# If it's the minimizing player's turn
+				value = self.minimax(graph, child, depth - 1, False, alpha, beta)
+				if value > alpha:
+					alpha = value
+					if graph.root == node:
+						graph.bestMove = child.board
+				# Stop searching if alpha >= beta
+				if alpha >= beta:
+					return alpha
+			return alpha
+		# If it's the minimizing player's turn, return the lowest value
 		else:
-			bestValue = 9999999999
 			for child in node.children:
-				value = self.minimax(graph, child, depth - 1, True)
-				bestValue = min(bestValue, value)
-			return bestValue
+				value = self.minimax(graph, child, depth - 1, False, alpha, beta)
+				if value < beta:
+					beta = value
+					if graph.root == node:
+						graph.bestMove = child.board
+				# Stop searching if beta <= alpha
+				if beta <= alpha:
+					return beta
+			return beta
 
 class WhitePlayer(Player):
 	def __init__(self, kingPos, rookPos):
@@ -198,50 +208,22 @@ class WhitePlayer(Player):
 	def heuristicX(self, board, lookahead):
 		#print("In Heuristic X")
 		gameGraph = self.makeGraph(Color["White"], board, lookahead)
-		self.minimax(gameGraph, gameGraph.root, lookahead, True)
+		self.minimax(gameGraph, gameGraph.root, lookahead, True, -9999999999, 9999999999)
 
-		moves = []
-		weightedMoves = []
-		blackOccupancy = list(board.occupied)
-		
-		for piece in self.pieces:
-			#print(piece, piece.position)
-			blackOccupancy.remove(piece.position)
-			pieceMoves = piece.getLegalMoves(board)
-			moves.extend(pieceMoves)
-			bestestMoves = []
 
-			for k in pieceMoves: 
-				heurVal = self.calculateHV(k, piece, blackOccupancy)
+		# for k in pieceMoves: 
+		# 	heurVal = self.calculateHV(k, piece, blackOccupancy)
 
 
 		#print("Black King: ", blackOccupancy, len(moves))
 
 		#return updated board
-		return moves[random.randint(0, len(moves) - 1)]
+		# return moves[random.randint(0, len(moves) - 1)]
+		return gameGraph.bestMove
 
-	def calculateHV(self, possibleMove, piece, blackKing):
-		king_danger_squares = []
-		#Proposed attack, king moves to space new space
-		# if(str(piece) == "king"):
-		# 	print("Possible King attacks: ", possibleMove.occupied[0])
-		# else:
-		# 	print("Possible Rook attacks: ", possibleMove.occupied[1])
-		#Calculate the squares in danger
-		possibleMove.blackAttacks.append(blackKing[0])
-		currentLegals = list(set(possibleMove.whiteAttacks).intersection(possibleMove.blackAttacks))
-
-		for attacks in currentLegals:
-			if str(attacks) not in king_danger_squares:
-				king_danger_squares.append(str(attacks))
-			elif str(attacks) == blackOccupancy[0]:
-				king_danger_squares.append(str(attacks))
-		#print(list(king_danger_squares))
-
-		#print("herusitc: ", len(currentLegals), currentLegals)
-		weighted = [len(currentLegals), king_danger_squares, possibleMove]
-
-		return int(len(currentLegals))
+	def calculateHV(self, board):
+		king_danger_squares = list(set(board.whiteAttacks).intersection(board.blackAttacks))
+		return len(king_danger_squares)
 
 
 	def randomX(self, board):
@@ -564,9 +546,8 @@ class Board(object):
 		for piece in self.pieces:
 			if piece.color == Color["Black"]:
 				self.blackAttacks = [piece.position.tl(), piece.position.t(), piece.position.tr(),
-					piece.position.l(), piece.position.r(),
+					piece.position.l(), piece.position, piece.position.r(),
 					piece.position.bl(), piece.position.b(), piece.position.br()]
-		#self.blackAttacks.extend(self.calcBorderPositions())
 
 	# List border positions as under attack
 	def calcBorderPositions(self):
