@@ -156,33 +156,37 @@ class WhitePlayer(Player):
 			bestestMoves = []
 
 			for k in pieceMoves: 
-				king_danger_squares = []
-				#Proposed attack, king moves to space new space
-				if(str(piece) == "king"):
-					print("Possible King attacks: ", k.occupied[0])
-				else:
-					print("Possible Rook attacks: ", k.occupied[1])
-				#Calculate the squares in danger
-				k.blackAttacks.append(blackOccupancy[0])
-				currentLegals = list(set(k.whiteAttacks).intersection(k.blackAttacks))
-
-				for attacks in currentLegals:
-					if str(attacks) not in king_danger_squares:
-						king_danger_squares.append(str(attacks))
-					elif str(attacks) == blackOccupancy[0]:
-						king_danger_squares.append(str(attacks))
-				#print(list(king_danger_squares))
-
-				#print("herusitc: ", len(heuristicValue), heuristicValue)
-				weighted = [len(currentLegals), king_danger_squares, k]
-				print("heuristic: " , weighted[0], weighted[1])
-				weightedMoves.append(weighted)
+				heurVal = self.calculateHV(k, piece, blackOccupancy)
 
 
-		print("Black King: ", blackOccupancy, len(weightedMoves))
+		print("Black King: ", blackOccupancy, len(moves))
 
 		#return updated board
 		return moves[random.randint(0, len(moves) - 1)]
+
+	def calculateHV(self, possibleMove, piece, blackKing):
+		king_danger_squares = []
+		#Proposed attack, king moves to space new space
+		if(str(piece) == "king"):
+			print("Possible King attacks: ", possibleMove.occupied[0])
+		else:
+			print("Possible Rook attacks: ", possibleMove.occupied[1])
+		#Calculate the squares in danger
+		possibleMove.blackAttacks.append(blackKing[0])
+		currentLegals = list(set(possibleMove.whiteAttacks).intersection(possibleMove.blackAttacks))
+
+		for attacks in currentLegals:
+			if str(attacks) not in king_danger_squares:
+				king_danger_squares.append(str(attacks))
+			elif str(attacks) == blackOccupancy[0]:
+				king_danger_squares.append(str(attacks))
+		#print(list(king_danger_squares))
+
+		print("herusitc: ", len(currentLegals), currentLegals)
+		weighted = [len(currentLegals), king_danger_squares, possibleMove]
+
+		return int(len(currentLegals))
+
 
 	def randomX(self, board):
 		moves = []
@@ -226,6 +230,16 @@ class BlackPlayer(Player):
 	def heuristicY(self, board):
 		print("In Heuristic Y")
 
+		borderPositions = []
+		for y in range (10):
+			borderPositions.append(Position(1 , y))
+		for x in range (1 , 10):
+			borderPositions.append(Position(x , 8))
+		for y in range (8, -1, -1):
+			borderPositions.append(Position(8 , y))
+		for x in range (8 , 0 , -1):
+			borderPositions.append(Position(x , 1))
+
 		moves = []
 		if debugLegalMoves:
 			print("Drawing all legal moves for the Black player...\n")
@@ -233,22 +247,24 @@ class BlackPlayer(Player):
 		whiteOccupancy = list(board.occupied)
 		for piece in self.pieces:
 			pieceMoves = piece.getLegalMoves(board)
-			king_danger_squares = []
+			king_safer_squares = []
 			moves.extend(pieceMoves)
 
 			for k in pieceMoves: 
-				king_danger_squares = []
+				king_safe_squares = []
 				#Proposed attack, king moves to space new space
-				print("Possible King attacks: ", k.occupied[0])
+				print("Possible King attacks: ", k.occupied[2])
+
+				k.blackAttacks.extend(borderPositions)
 
 				#Calculate the squares in danger. 3 is optimal for king vs king
 				currentLegals = list(set(k.whiteAttacks).intersection(k.blackAttacks))
 
 				for attacks in currentLegals:
-					if str(attacks) not in king_danger_squares:
-						king_danger_squares.append(str(attacks))
+					if str(attacks) not in king_safe_squares:
+						king_safe_squares.append(str(attacks))
 
-				print(list(king_danger_squares))
+				#print(list(king_safe_squares))
 					
 
 
