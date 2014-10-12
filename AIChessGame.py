@@ -167,54 +167,28 @@ class WhitePlayer(Piece):
 			pieceMoves = piece.getLegalMoves(board)
 			moves.extend(pieceMoves)
 
+			for k in pieceMoves: 
+				king_danger_squares = []
+				#Proposed attack, king moves to space new space
+				print("Possible King attacks: ", k.occupied[0])
 
-			if str(piece) == "king":
-				for k in pieceMoves: 
-					king_danger_squares = []
-					#Proposed attack, king moves to space new space
-					print("Possible King attacks: ", k.occupied[0])
+				#Calculate the squares in danger
+				currentLegals = list(set(k.whiteAttacks).intersection(k.blackAttacks))
 
-					#Calculate the squares in danger. 3 is optimal for king vs king
-					currentLegals = list(set(k.whiteAttacks).intersection(k.blackAttacks))
+				for attacks in currentLegals:
+					if str(attacks) not in king_danger_squares:
+						king_danger_squares.append(str(attacks))
 
-					for attacks in currentLegals:
-						if str(attacks) not in king_danger_squares:
-							king_danger_squares.append(str(attacks))
-
-					print(list(king_danger_squares))
-					if(len(king_danger_squares) > 0):
-						bestMoves.append(k)
-
-					#Only add the optimal squares to the move list.
-					#if(len(king_danger_squares) > 2):
-					#	moves.append(p)
-					#	print(len(moves), len(king_danger_squares), king_danger_squares)
-					#	return moves[random.randint(0, len(moves) - 1)]
-			elif str(piece) == "rook":
-
-				for r in pieceMoves:
-					king_danger_squares = []
-					print("Possible Rook Attacks: ", r.occupied[1])
-					currentLegals = list(set(r.whiteAttacks).intersection(r.blackAttacks))
-
-					for attacks in currentLegals:
-						if str(attacks) not in king_danger_squares:
-							king_danger_squares.append(str(attacks))
-
-					print(list(king_danger_squares))
-					if(len(king_danger_squares) > 0):
-						bestMoves.append(r)
-					#king_danger_squares.extend(list(set(r.whiteAttacks).intersection(r.blackAttacks)))
-					#print(list(king_danger_squares))
+				print(list(king_danger_squares))
 
 			for weight in bestMoves:
 				heuristicValue = list(set(weight.whiteAttacks).intersection(weight.blackAttacks))
 				#print("herusitc: ", len(heuristicValue), heuristicValue)
 				weightedMove = [len(heuristicValue), heuristicValue, weight]
 				print("heuristic: " , weightedMove[0], weightedMove[1])
-
 				bestestMoves.append(weightedMove)
 
+		print(bestestMoves[0].weightedMove[0])
 		print("Black King: ", blackOccupancy, len(bestMoves))
 		print("Black King: ", blackOccupancy, len(moves))
 
