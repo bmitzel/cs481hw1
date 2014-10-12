@@ -10,7 +10,7 @@ BoardState = {"None":0, "Checkmate":1, "Stalemate":2}
 
 class AIChessGame(object):
 	def __init__(self):
-		self.lookAhead = 2
+		self.lookahead = 5
 		self.testCase = 0
 		self.useHeuristicY = False
 		self.n = 0
@@ -404,6 +404,10 @@ class Position(object):
 
 	def __eq__(self, other):
 		return (self.x == other.x) and (self.y == other.y)
+
+	def __hash__(self):
+		#return hash(tuple(self.__str__()))
+		return hash(self.__str__())
 
 	# The following 8 functions are for returning each of the 8 squares around the current position.
 	# These will be useful for determining check mate and stale mate.
