@@ -2,17 +2,13 @@
 MinMax = {"MIN":0, "MAX":1}
 
 class Graph(object):
-	def __init__(self, start):
-		#self.root = Node(start, MinMax["MAX"])
-		pass
+	def __init__(self, startingBoardState):
+		self.root = Node(MinMax["MIN"], 0, startingBoardState)
 
 class Node(object):
-	def __init__(self, nodeType, text, board, value):
+	def __init__(self, nodeType, level, board):
 		self.type = nodeType
-		self.description = text
+		self.depth = level
 		self.board = board
-		self.value = value
+		self.value = 0
 		self.children = []
-
-	def insert(self, board):
-		self.children.append(board)

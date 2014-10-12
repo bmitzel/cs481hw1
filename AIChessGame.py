@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os, sys, random
+import os, sys, random, time
 import Graph
 
 debugLegalMoves = False
@@ -10,7 +10,7 @@ BoardState = {"None":0, "Checkmate":1, "Stalemate":2}
 
 class AIChessGame(object):
 	def __init__(self):
-		self.lookahead = 5
+		self.lookahead = 3
 		self.testCase = 0
 		self.useHeuristicY = False
 		self.n = 0
@@ -139,10 +139,48 @@ class WhitePlayer(Player):
 	def __repr__(self):
 		return self.__str__()
 
+	# Generate the game graph from the current board state
+	def makeGraph(self, currentBoard, maxDepth):
+		start = time.clock()
+		# Insert the root node
+		gameGraph = Graph.Graph(currentBoard)
+		tempNode = gameGraph.root
+
+		# Generate the rest of the tree using iterative depth-first search algorithm
+		stack = []
+		discovered = []
+		nextColor = Color["Black"]
+		stack.append(tempNode)
+		# Process all new, undiscovered nodes
+		while (stack):
+			tempNode = stack.pop()
+			nodeType = tempNode.type
+			level = tempNode.depth
+			if tempNode not in discovered:
+				# Generate all the children for the current node without exceeding maxDepth
+				childBoards = []
+				if level < maxDepth:
+					# Determine which player is making the next move; adjust node type and level
+					nextColor = (nextColor + 1) % 2
+					nodeType = (nodeType + 1) % 2
+					level = level + 1
+					for piece in tempNode.board.pieces:
+						if piece.color == nextColor:
+							childBoards.extend(piece.getLegalMoves(tempNode.board))
+				for newBoard in childBoards:
+					tempNode.children.append(Graph.Node(nodeType, level, newBoard))
+				# Add the generated child nodes to the stack for processing
+				for child in tempNode.children:
+					stack.append(child)
+				# Add the completed node to the discovered list
+				discovered.append(tempNode)
+		elapsed = time.clock() - start
+		print("ELapsed time to generate the game graph: " + str(elapsed))
+
 	# Get best move using mini-max algorithm
-	def heuristicX(self, board):
-		#graph = Graph(board)
-		print("In Heuristic X")
+	def heuristicX(self, board, lookahead):
+		#print("In Heuristic X")
+		self.makeGraph(board, lookahead)
 
 		moves = []
 		bestMoves = []
@@ -150,7 +188,7 @@ class WhitePlayer(Player):
 		blackOccupancy = list(board.occupied)
 		
 		for piece in self.pieces:
-			print(piece, piece.position)
+			#print(piece, piece.position)
 			blackOccupancy.remove(piece.position)
 			pieceMoves = piece.getLegalMoves(board)
 			moves.extend(pieceMoves)
@@ -158,7 +196,7 @@ class WhitePlayer(Player):
 			for k in pieceMoves: 
 				king_danger_squares = []
 				#Proposed attack, king moves to space new space
-				print("Possible King attacks: ", k.occupied[0])
+				#print("Possible King attacks: ", k.occupied[0])
 
 				#Calculate the squares in danger
 				currentLegals = list(set(k.whiteAttacks).intersection(k.blackAttacks))
@@ -167,18 +205,18 @@ class WhitePlayer(Player):
 					if str(attacks) not in king_danger_squares:
 						king_danger_squares.append(str(attacks))
 
-				print(list(king_danger_squares))
+				#print(list(king_danger_squares))
 
 			for weight in bestMoves:
 				heuristicValue = list(set(weight.whiteAttacks).intersection(weight.blackAttacks))
 				#print("herusitc: ", len(heuristicValue), heuristicValue)
 				weightedMove = [len(heuristicValue), heuristicValue, weight]
-				print("heuristic: " , weightedMove[0], weightedMove[1])
+				#print("heuristic: " , weightedMove[0], weightedMove[1])
 				bestestMoves.append(weightedMove)
 
 
-		print("Black King: ", blackOccupancy, len(bestMoves))
-		print("Black King: ", blackOccupancy, len(moves))
+		#print("Black King: ", blackOccupancy, len(bestMoves))
+		#print("Black King: ", blackOccupancy, len(moves))
 
 		#return updated board
 		return moves[random.randint(0, len(moves) - 1)]
@@ -200,7 +238,7 @@ class WhitePlayer(Player):
 		if debugWhiteRandom:
 			game.board = self.randomX(game.board)
 		else:
-			game.board = self.heuristicX(game.board)
+			game.board = self.heuristicX(game.board, game.lookahead)
 		for player in game.players:
 			player.updatePieces(game.board)
 
@@ -222,8 +260,8 @@ class BlackPlayer(Player):
 		return self.__str__()
 
 	# Get best move using mini-max algorithm
-	def heuristicY(self, board):
-		print("In Heuristic Y")
+	def heuristicY(self, board, lookahead):
+		#print("In Heuristic Y")
 
 		moves = []
 		if debugLegalMoves:
@@ -238,7 +276,7 @@ class BlackPlayer(Player):
 			for k in pieceMoves: 
 				king_danger_squares = []
 				#Proposed attack, king moves to space new space
-				print("Possible King attacks: ", k.occupied[0])
+				#print("Possible King attacks: ", k.occupied[0])
 
 				#Calculate the squares in danger. 3 is optimal for king vs king
 				currentLegals = list(set(k.whiteAttacks).intersection(k.blackAttacks))
@@ -247,7 +285,7 @@ class BlackPlayer(Player):
 					if str(attacks) not in king_danger_squares:
 						king_danger_squares.append(str(attacks))
 
-				print(list(king_danger_squares))
+				#print(list(king_danger_squares))
 					
 
 
@@ -270,7 +308,7 @@ class BlackPlayer(Player):
 	def movePlayer(self, game):
 		# Get the new board from heuristicY or randomY and update the player's pieces
 		if game.useHeuristicY:
-			game.board = self.heuristicY(game.board)
+			game.board = self.heuristicY(game.board, game.lookahead)
 		else:
 			game.board = self.randomY(game.board)
 		for player in game.players:
@@ -354,7 +392,6 @@ class Rook(Piece):
 			occupied.remove(self.position)
 		else:
 			occupied = []
-		print(occupied)
 		# Generate all the legal moves from the current position
 		# Add each new board object to the list of moves
 		# Move up
@@ -507,7 +544,6 @@ class Board(object):
 			borderPositions.append(Position(9 , y))
 		for x in range (8 , 0 , -1):
 			borderPositions.append(Position(x , 0))
-		print(borderPositions)
 		return borderPositions
 
 	# Calculate which squares are occupied by both players
