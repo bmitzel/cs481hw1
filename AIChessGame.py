@@ -145,8 +145,7 @@ class WhitePlayer(Player):
 		print("In Heuristic X")
 
 		moves = []
-		bestMoves = []
-		bestestMoves = []
+		weightedMoves = []
 		blackOccupancy = list(board.occupied)
 		
 		for piece in self.pieces:
@@ -154,31 +153,32 @@ class WhitePlayer(Player):
 			blackOccupancy.remove(piece.position)
 			pieceMoves = piece.getLegalMoves(board)
 			moves.extend(pieceMoves)
+			bestestMoves = []
 
 			for k in pieceMoves: 
 				king_danger_squares = []
 				#Proposed attack, king moves to space new space
-				print("Possible King attacks: ", k.occupied[0])
-
+				if(str(piece) == "king"):
+					print("Possible King attacks: ", k.occupied[0])
+				else:
+					print("Possible Rook attacks: ", k.occupied[1])
 				#Calculate the squares in danger
 				currentLegals = list(set(k.whiteAttacks).intersection(k.blackAttacks))
 
 				for attacks in currentLegals:
 					if str(attacks) not in king_danger_squares:
 						king_danger_squares.append(str(attacks))
+					elif str(attacks) == blackOccupancy[0]:
+						king_danger_squares.append(str(attacks))
+				#print(list(king_danger_squares))
 
-				print(list(king_danger_squares))
-
-			for weight in bestMoves:
-				heuristicValue = list(set(weight.whiteAttacks).intersection(weight.blackAttacks))
 				#print("herusitc: ", len(heuristicValue), heuristicValue)
-				weightedMove = [len(heuristicValue), heuristicValue, weight]
-				print("heuristic: " , weightedMove[0], weightedMove[1])
-				bestestMoves.append(weightedMove)
+				weighted = [len(currentLegals), king_danger_squares, k]
+				print("heuristic: " , weighted[0], weighted[1])
+				weightedMoves.append(weighted)
 
 
-		print("Black King: ", blackOccupancy, len(bestMoves))
-		print("Black King: ", blackOccupancy, len(moves))
+		print("Black King: ", blackOccupancy, len(weightedMoves))
 
 		#return updated board
 		return moves[random.randint(0, len(moves) - 1)]
@@ -493,8 +493,8 @@ class Board(object):
 			if piece.color == Color["Black"]:
 				self.blackAttacks = [piece.position.tl(), piece.position.t(), piece.position.tr(),
 					piece.position.l(), piece.position.r(),
-					piece.position.bl(), piece.position.b(), piece.position.br()]
-		self.blackAttacks.extend(self.calcBorderPositions())
+					piece.position.bl(), piece.position.b(), piece.position.br(), piece.position]
+		#self.blackAttacks.extend(self.calcBorderPositions())
 
 	# List border positions as under attack
 	def calcBorderPositions(self):
@@ -507,7 +507,7 @@ class Board(object):
 			borderPositions.append(Position(9 , y))
 		for x in range (8 , 0 , -1):
 			borderPositions.append(Position(x , 0))
-		print(borderPositions)
+		#print(borderPositions)
 		return borderPositions
 
 	# Calculate which squares are occupied by both players
