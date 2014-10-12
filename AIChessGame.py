@@ -208,19 +208,8 @@ class WhitePlayer(Player):
 
 	# Get best move using mini-max algorithm
 	def heuristicX(self, board, lookahead):
-		#print("In Heuristic X")
 		gameGraph = self.makeGraph(Color["White"], board, lookahead)
 		self.minimax(gameGraph, gameGraph.root, lookahead, True, -9999999999, 9999999999)
-
-
-		# for k in pieceMoves: 
-		# 	heurVal = self.calculateHV(k, piece, blackOccupancy)
-
-
-		#print("Black King: ", blackOccupancy, len(moves))
-
-		#return updated board
-		# return moves[random.randint(0, len(moves) - 1)]
 		return gameGraph.bestMove
 
 	def calculateHV(self, board):
@@ -252,10 +241,9 @@ class WhitePlayer(Player):
 
 		# Count twice the number of squares on and around the Black king that are under attack
 		# This is intended to give a high priority to attacking the Black king
-		#value = 2 * len(list(set(board.whiteAttacks).intersection(board.blackAttacks)))
-		value = 0
+		value = 2 * len(list(set(board.whiteAttacks).intersection(board.blackAttacks)))
 
-		# Subtract 4x distance between the rook and nearest board edge in the Black king direction
+		# Subtract the distance between the rook and nearest board edge in the Black king direction
 		# This is because we want the rook to trap the Black king on a board edge
 		# Then, subtract the distance between the White king and two squares away from that edge
 		# This is to position the White king on the correct row or column for a check mate
@@ -280,7 +268,7 @@ class WhitePlayer(Player):
 		elif bkPos.y - rookPos.y < 0:
 			rookDistance = min(rookPos.y - 1, rookDistance)
 			kingDistance = max(abs(wkPos.y - 3), 2)
-		value = value - 4 * rookDistance - kingDistance
+		value = value - rookDistance - kingDistance
 
 		# Subtract the distance between the Black king and the nearest board edge
 		# This is because we can only mate the Black king while it is on a board edge
@@ -644,7 +632,6 @@ class Board(object):
 			borderPositions.append(Position(9 , y))
 		for x in range (8 , 0 , -1):
 			borderPositions.append(Position(x , 0))
-		#print(borderPositions)
 		return borderPositions
 
 	# Calculate which squares are occupied by both players
