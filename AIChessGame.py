@@ -157,6 +157,8 @@ class WhitePlayer(Piece):
 		print("In Heuristic X")
 
 		moves = []
+		bestMoves = []
+
 		blackOccupancy = list(board.occupied)
 		
 		for piece in self.pieces:
@@ -164,9 +166,6 @@ class WhitePlayer(Piece):
 			blackOccupancy.remove(piece.position)
 			pieceMoves = piece.getLegalMoves(board)
 			moves.extend(pieceMoves)
-			#king_danger_squares = []
-
-			#king_danger_squares = set(p.whiteAttacks).intersection(p.blackAttacks)
 
 
 			if str(piece) == "king":
@@ -183,7 +182,8 @@ class WhitePlayer(Piece):
 							king_danger_squares.append(str(attacks))
 
 					print(list(king_danger_squares))
-					
+					if(len(king_danger_squares) > 0):
+						bestMoves.append(k)
 
 					#Only add the optimal squares to the move list.
 					#if(len(king_danger_squares) > 2):
@@ -202,11 +202,17 @@ class WhitePlayer(Piece):
 							king_danger_squares.append(str(attacks))
 
 					print(list(king_danger_squares))
+					if(len(king_danger_squares) > 0):
+						bestMoves.append(r)
 					#king_danger_squares.extend(list(set(r.whiteAttacks).intersection(r.blackAttacks)))
 					#print(list(king_danger_squares))
 
+			for weight in bestMoves:
 
+				heuristicValue = list(set(weight.whiteAttacks).intersection(weight.blackAttacks))
+				print("herusitc: ", len(heuristicValue), heuristicValue)
 
+		print("Black King: ", blackOccupancy, len(bestMoves))
 		print("Black King: ", blackOccupancy, len(moves))
 
 		#return updated board
@@ -264,7 +270,7 @@ class BlackPlayer(Piece):
 			pieceMoves = piece.getLegalMoves(board)
 			king_danger_squares = []
 			moves.extend(pieceMoves)
-			
+
 			for k in pieceMoves: 
 				king_danger_squares = []
 				#Proposed attack, king moves to space new space
