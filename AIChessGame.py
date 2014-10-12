@@ -10,7 +10,7 @@ BoardState = {"None":0, "Checkmate":1, "Stalemate":2}
 
 class AIChessGame(object):
 	def __init__(self):
-		self.lookahead = 3
+		self.lookahead = 4
 		self.testCase = 0
 		self.useHeuristicY = False
 		self.n = 0
@@ -143,32 +143,27 @@ class WhitePlayer(Player):
 	def makeGraph(self, currentBoard, maxDepth):
 		start = time.clock()
 		# Insert the root node
-		gameGraph = Graph.Graph(currentBoard)
+		gameGraph = Graph.Graph(Color["Black"], currentBoard)
 		tempNode = gameGraph.root
 
 		# Generate the rest of the tree using iterative depth-first search algorithm
 		stack = []
 		discovered = []
-		nextColor = Color["Black"]
 		stack.append(tempNode)
 		# Process all new, undiscovered nodes
 		while (stack):
 			tempNode = stack.pop()
-			nodeType = tempNode.type
-			level = tempNode.depth
 			if tempNode not in discovered:
 				# Generate all the children for the current node without exceeding maxDepth
 				childBoards = []
-				if level < maxDepth:
-					# Determine which player is making the next move; adjust node type and level
-					nextColor = (nextColor + 1) % 2
-					nodeType = (nodeType + 1) % 2
-					level = level + 1
+				if tempNode.depth < maxDepth:
+					# Determine which player is making the next move
+					nextPlayer = (tempNode.activePlayer + 1) % 2
 					for piece in tempNode.board.pieces:
-						if piece.color == nextColor:
+						if piece.color == nextPlayer:
 							childBoards.extend(piece.getLegalMoves(tempNode.board))
 				for newBoard in childBoards:
-					tempNode.children.append(Graph.Node(nodeType, level, newBoard))
+					tempNode.children.append(Graph.Node(nextPlayer, tempNode.depth + 1, newBoard))
 				# Add the generated child nodes to the stack for processing
 				for child in tempNode.children:
 					stack.append(child)
