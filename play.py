@@ -28,22 +28,29 @@ def printStart(players, useHeuristicY):
 
 # Plays a game of chess
 def play(game):
+	whiteMoves = 0
 	printStart(game.players, game.useHeuristicY)
 	game.printBoard()
 	for n in range(game.n):
 		for player in game.players:
 			# End the game if check mate or stale mate
 			game.board.calcBoardState()
-			if game.board.state != BoardState["None"]:
+			if game.board.state != BoardState["None"] and str(player) == "Black":
+				print("Number of moves made: " + str(whiteMoves))
 				if game.board.state == BoardState["Checkmate"]:
-					print("Checkmate")
+					print("Game result: Checkmate")
 				else:
-					print("Stalemate")
+					print("Game result: Stalemate")
 				sys.exit(0)
 			# If the game is not over, make the next move and draw the board
 			else:
 				player.movePlayer(game)
 				game.printBoard()
+				if str(player) == "White":
+					whiteMoves = whiteMoves + 1
+
+	print("Numer of moves made: " + str(whiteMoves))
+	print("Game result: None")
 
 # Begins program execution
 if __name__ == "__main__":
