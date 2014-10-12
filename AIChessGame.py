@@ -162,7 +162,9 @@ class Player(object):
 	def minimax(self, graph, node, depth, maximize, alpha, beta):
 		# If at max depth or a leaf node, return the heuristic value
 		if (depth == 0) or (not node.children):
-			return self.calculateHV(node.board)
+			value = self.calculateHV(node.board)
+			# print(str(value))
+			return value
 		# If at the root, initialize the best move to the first move
 		if graph.root == node:
 			graph.bestMove = node.children[0].board
@@ -184,7 +186,7 @@ class Player(object):
 		# If it's the minimizing player's turn, return the lowest value
 		else:
 			for child in node.children:
-				value = self.minimax(graph, child, depth - 1, False, alpha, beta)
+				value = self.minimax(graph, child, depth - 1, True, alpha, beta)
 				if value < beta:
 					beta = value
 					if graph.root == node:
@@ -222,9 +224,76 @@ class WhitePlayer(Player):
 		return gameGraph.bestMove
 
 	def calculateHV(self, board):
-		king_danger_squares = list(set(board.whiteAttacks).intersection(board.blackAttacks))
-		return len(king_danger_squares)
+		# If the rook has been captured, return -infinity
+		if len(board.pieces) < 3:
+			return -9999999999
 
+		# If the rook is under attack and not defended by the king, return -infinity
+		for piece in board.pieces:
+			if str(piece) == "king" and piece.color == Color["White"]:
+				wkPos = piece.position
+				wkDefense = [wkPos.tl(), wkPos.t(), wkPos.tr(),
+						wkPos.l(), wkPos.r(),
+						wkPos.bl(), wkPos.b(), wkPos.br()]
+		for piece in board.pieces:
+			if str(piece) == "rook":
+				rookPos = piece.position
+				if piece.position in board.blackAttacks and piece.position not in wkDefense:
+					return -9999999999
+
+		# If the board is in stale mate, return -infinity
+		board.calcBoardState()
+		if board.state == BoardState["Stalemate"]:
+			return -9999999999
+
+		# If the board is in check mate, return +infinity
+		if board.state == BoardState["Checkmate"]:
+			return 9999999999
+
+		# Count twice the number of squares on and around the Black king that are under attack
+		# This is intended to give a high priority to attacking the Black king
+		#value = 2 * len(list(set(board.whiteAttacks).intersection(board.blackAttacks)))
+		value = 0
+
+		# Subtract 4x distance between the rook and nearest board edge in the Black king direction
+		# This is because we want the rook to trap the Black king on a board edge
+		# Then, subtract the distance between the White king and two squares away from that edge
+		# This is to position the White king on the correct row or column for a check mate
+		for piece in board.pieces:
+			if str(piece) == "king" and piece.color == Color["Black"]:
+				bkPos = piece.position
+		rookDistance = 0
+		kingDistance = 0
+		# The Black king is to the right of the rook
+		if bkPos.x - rookPos.x > 0:
+			rookDistance = 8 - rookPos.x
+			kingDistance = max(abs(6 - wkPos.x), 2)
+		# The Black king is to the left of the rook
+		elif bkPos.x - rookPos.x < 0:
+			rookDistance = rookPos.x - 1
+			kingDistance = max(abs(wkPos.x - 3), 2)
+		# The Black king is above the rook
+		if bkPos.y - rookPos.y > 0:
+			rookDistance = min(8 - rookPos.y, rookDistance)
+			kingDistance = max(abs(6 - wkPos.y), 2)
+		# The Black king is below the rook
+		elif bkPos.y - rookPos.y < 0:
+			rookDistance = min(rookPos.y - 1, rookDistance)
+			kingDistance = max(abs(wkPos.y - 3), 2)
+		value = value - 4 * rookDistance - kingDistance
+
+		# Subtract the distance between the Black king and the nearest board edge
+		# This is because we can only mate the Black king while it is on a board edge
+		for piece in board.pieces:
+			if str(piece) == "king" and piece.color == Color["Black"]:
+				bkPos = piece.position
+		minDistance = abs(bkPos.x - 1)
+		minDistance = min(abs(bkPos.x - 8), minDistance)
+		minDistance = min(abs(bkPos.y - 1), minDistance)
+		minDistance = min(abs(bkPos.y - 8), minDistance)
+		value = value - minDistance
+
+		return value
 
 	def randomX(self, board):
 		moves = []
@@ -407,35 +476,44 @@ class Rook(Piece):
 		if self.color == Color["White"]:
 			occupied = list(board.occupied)
 			occupied.remove(self.position)
+		# The Black king doesn't care about occupied squares since it can't move there anyway
 		else:
 			occupied = []
 		# Generate all the legal moves from the current position
 		# Add each new board object to the list of moves
+		legalPositions = self.calcLegalPositions(occupied)
+		for position in legalPositions:
+			self.addMove(legalMoves, board, position)
+		return legalMoves
+
+	# Calculates all the legal positions to which the rook can move
+	def calcLegalPositions(self, occupied):
+		positions = []
 		# Move up
 		for y in range(self.position.y + 1, 9):
 			newPosition = Position(self.position.x, y)
 			if newPosition in occupied:
 				break
-			self.addMove(legalMoves, board, newPosition)
+			positions.append(newPosition)
 		# Move down
 		for y in range(self.position.y - 1, 0, -1):
 			newPosition = Position(self.position.x, y)
 			if newPosition in occupied:
 				break
-			self.addMove(legalMoves, board, newPosition)
+			positions.append(newPosition)
 		# Move left
 		for x in range(self.position.x - 1, 0, -1):
 			newPosition = Position(x, self.position.y)
 			if newPosition in occupied:
 				break
-			self.addMove(legalMoves, board, newPosition)
+			positions.append(newPosition)
 		# Move right
 		for x in range(self.position.x + 1, 9):
 			newPosition = Position(x, self.position.y)
 			if newPosition in occupied:
 				break
-			self.addMove(legalMoves, board, newPosition)
-		return legalMoves
+			positions.append(newPosition)
+		return positions
 
 	# Create and add a new board object to the list of legal moves
 	def addMove(self, moves, board, position):
@@ -518,9 +596,9 @@ class Board(object):
 
 	# Update which squares are currently under attack or occupied by both players
 	def update(self):
+		self.calcOccupied()
 		self.calcWhiteAttacks()
 		self.calcBlackAttacks()
-		self.calcOccupied()
 
 	# Calculate which squares are under attack by the White player
 	def calcWhiteAttacks(self):
@@ -533,12 +611,18 @@ class Board(object):
 						piece.position.l(), piece.position.r(),
 						piece.position.bl(), piece.position.b(), piece.position.br()])
 				else:
-					for x in range(10):
-						if x != piece.position.x:
-							self.whiteAttacks.append(Position(x, piece.position.y))
-					for y in range(10):
-						if y != piece.position.y:
-							self.whiteAttacks.append(Position(piece.position.x, y))
+					# Get the list of positions the rook can attack
+					otherOccupied = list(self.occupied)
+					otherOccupied.remove(piece.position)
+					for otherPiece in self.pieces:
+						if str(otherPiece) == "king":
+							# Allow the Black king's position and any squares beyond it
+							if otherPiece.color == Color["Black"]:
+								otherOccupied.remove(otherPiece.position)
+							# If the White king is defended by the rook, add its position
+							else:
+								self.whiteAttacks.append(otherPiece.position)
+					self.whiteAttacks.extend(piece.calcLegalPositions(otherOccupied))
 		self.whiteAttacks.extend(self.calcBorderPositions())
 
 	# Calculate which squares are under attack by the Black player
