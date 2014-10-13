@@ -178,10 +178,10 @@ class Player(object):
 		return gameGraph
 
 	# Finds the optimal move in the game graph using the mini-max algorithm
-	def minimax(self, graph, node, depth, maximize, alpha, beta):
+	def minimax(self, graph, node, depth, maxDepth, maximize, alpha, beta):
 		# If at max depth or a leaf node, return the heuristic value
 		if (depth == 0) or (not node.children):
-			return self.calculateHV(node.board)
+			return self.calculateHV(node.board) - maxDepth + depth
 		# If there is only one possible move, we're done
 		if graph.root == node:
 			if len(node.children) == 1:
@@ -189,7 +189,7 @@ class Player(object):
 		# If it's the maximizing player's turn, return the highest value
 		if maximize:
 			for child in node.children:
-				value = self.minimax(graph, child, depth - 1, False, alpha, beta)
+				value = self.minimax(graph, child, depth - 1, maxDepth, False, alpha, beta)
 				if value > alpha:
 					alpha = value
 					if graph.root == node:
@@ -201,7 +201,7 @@ class Player(object):
 		# If it's the minimizing player's turn, return the lowest value
 		else:
 			for child in node.children:
-				value = self.minimax(graph, child, depth - 1, True, alpha, beta)
+				value = self.minimax(graph, child, depth - 1, maxDepth, True, alpha, beta)
 				if value < beta:
 					beta = value
 					if graph.root == node:
@@ -231,7 +231,7 @@ class WhitePlayer(Player):
 		gameGraph.bestMove = gameGraph.root.children[0].board
 
 		# Get the best move from the minimax function
-		self.minimax(gameGraph, gameGraph.root, lookahead, True, -9999999999, 9999999999)
+		self.minimax(gameGraph, gameGraph.root, lookahead, lookahead, True, -9999999999, 9999999999)
 
 		return gameGraph.bestMove
 
@@ -421,7 +421,7 @@ class BlackPlayer(Player):
 		gameGraph.bestMove = gameGraph.root.children[0].board
 
 		# Get the best move from the minimax function
-		self.minimax(gameGraph, gameGraph.root, lookahead, True, -9999999999, 9999999999)
+		self.minimax(gameGraph, gameGraph.root, lookahead, lookahead, True, -9999999999, 9999999999)
 
 		return gameGraph.bestMove
 
