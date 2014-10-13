@@ -1,15 +1,7 @@
-10-6
-checkmate, stalemate
-fix routine ( add outside coordinates)
-when game ends, result # of moves
+10/13/14 REMAINING:
 
+- Flesh out the written report with some additional details
 
-MAJOR:
-graph generating ( both heuristic) use herative depth first
-text string for move
-depth of level at (keep track of)
-convert board objects to node objects
-node: list(children)
-lookahead variable: determine how deep we go.
-
-
+- Could potentially still improve heuristicX; it does find
+  checkmate consistently now, but it's not always super
+  fast at getting there
