@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os, sys, random, time
+import os, sys, random
 import Graph
 
 debugLegalMoves = False
@@ -15,7 +15,7 @@ class AIChessGame(object):
 		self.useHeuristicY = False
 		self.n = 0
 		self.players = []
-		#self.board is initialized inside self.start() function
+		self.board = None
 
 	def printError(self):
 		print("Invalid input. Try again.\n")
@@ -114,23 +114,13 @@ class AIChessGame(object):
 			BlackPlayer(Position(bkX, bkY))]
 		self.board = Board(self.players[0].pieces, self.players[1].pieces)
 
-	# Returns true if the game has ended in a check mate
-	def isCheckMate(self):
-		pass
-
-	# Returns true if the game has ended in a stale mate
-	def isStaleMate(self):
-		pass
-
-	def end(self):
-		# Is there any cleanup to do before exiting? If not, delete this function.
-		pass
-
+# A class representing a quadrant of the chess board as determined by the White rook's position
 class Quadrant(object):
 	def __init__(self, position, width, height):
 		self.position = position
 		self.width = width
 		self.height = height
+		self.area = (width - 1) * (height - 1)
 
 	def __str__(self):
 		return str(self.position) + ", " + str(self.width) + " x " + str(self.height)
@@ -138,6 +128,7 @@ class Quadrant(object):
 	def __repr__(self):
 		return self.__str__()
 
+	# Returns true the if the given test position is contained inside the quadrant
 	def contains(self, testPosition):
 		if (testPosition.x >= self.position.x) and (testPosition.x < self.position.x + self.width):
 			if (testPosition.y >= self.position.y) and (testPosition.y < self.position.y +
@@ -145,6 +136,7 @@ class Quadrant(object):
 				return True
 		return False
 
+	# Returns a list of board positions that are contained inside the quadrant
 	def getContainedPositions(self):
 		containment = []
 		for x in range(self.position.x, self.position.x + self.width):
@@ -152,6 +144,7 @@ class Quadrant(object):
 				containment.append(Position(x, y))
 		return containment
 
+# A chess player base class
 class Player(object):
 	# Generate the game graph from the current board state
 	def makeGraph(self, currentPlayer, currentBoard, maxDepth):
@@ -188,22 +181,15 @@ class Player(object):
 	def minimax(self, graph, node, depth, maximize, alpha, beta):
 		# If at max depth or a leaf node, return the heuristic value
 		if (depth == 0) or (not node.children):
-			value = self.calculateHV(node.board)
-			if (node.depth % 2 == 1) and (value > 9):
-				print(str(value))
-			return value
-		# If at the root, initialize the best move to the first move
+			return self.calculateHV(node.board)
+		# If there is only one possible move, we're done
 		if graph.root == node:
-			graph.bestMove = node.children[0].board
-			# If there is only one possible move, we're done
 			if len(node.children) == 1:
 				return None
 		# If it's the maximizing player's turn, return the highest value
 		if maximize:
 			for child in node.children:
 				value = self.minimax(graph, child, depth - 1, False, alpha, beta)
-				# if child.depth == 1:
-				# 	print(str(value))
 				if value > alpha:
 					alpha = value
 					if graph.root == node:
@@ -216,8 +202,6 @@ class Player(object):
 		else:
 			for child in node.children:
 				value = self.minimax(graph, child, depth - 1, True, alpha, beta)
-				# if child.depth == 1:
-				# 	print(str(value))
 				if value < beta:
 					beta = value
 					if graph.root == node:
@@ -227,6 +211,7 @@ class Player(object):
 					return beta
 			return beta
 
+# The White player in the chess game, inherited from the Player base class
 class WhitePlayer(Player):
 	def __init__(self, kingPos, rookPos):
 		self.pieces = [King(Color["White"], kingPos), Rook(Color["White"], rookPos)]
@@ -239,10 +224,19 @@ class WhitePlayer(Player):
 
 	# Get best move using mini-max algorithm
 	def heuristicX(self, board, lookahead):
+		# Generate the game graph
 		gameGraph = self.makeGraph(Color["White"], board, lookahead)
+
+		# Initialize the best move to the first possible move
+		gameGraph.bestMove = gameGraph.root.children[0].board
+
+		# Get the best move from the minimax function
 		self.minimax(gameGraph, gameGraph.root, lookahead, True, -9999999999, 9999999999)
+
 		return gameGraph.bestMove
 
+	# Calculates the heuristic value of a given board state
+	# The White player's strategy is to find check mate as fast as possible
 	def calculateHV(self, board):
 		# If the rook has been captured, return -infinity
 		if len(board.pieces) < 3:
@@ -261,7 +255,7 @@ class WhitePlayer(Player):
 		# If the rook is under attack and not defended by the king, return -infinity
 		wkDefense = [wkPos.tl(), wkPos.t(), wkPos.tr(), wkPos.l(), wkPos.r(), wkPos.bl(), wkPos.b(),
 				wkPos.br()]
-		if rookPos in board.blackAttacks and rookPos not in wkDefense:
+		if (rookPos in board.blackAttacks) and (rookPos not in wkDefense):
 			return -9999999999
 
 		# If the board is in stale mate, return -infinity
@@ -277,10 +271,10 @@ class WhitePlayer(Player):
 		bkBlockedPositions = []
 
 		# Calculate the 4 quadrants of the board defined by the rook's position
-		quad1 = Quadrant(Position(rookPos.x + 1, rookPos.y + 1), 8 - rookPos.x, 8 - rookPos.y)
-		quad2 = Quadrant(Position(1, rookPos.y + 1), rookPos.x - 1, 8 - rookPos.y)
-		quad3 = Quadrant(Position(1, 1), rookPos.x - 1, rookPos.y - 1)
-		quad4 = Quadrant(Position(rookPos.x + 1, 1), 8 - rookPos.x, rookPos.y - 1)
+		quad1 = Quadrant(Position(rookPos.x + 1, rookPos.y + 1), 9 - rookPos.x, 9 - rookPos.y)
+		quad2 = Quadrant(Position(            0, rookPos.y + 1),     rookPos.x, 9 - rookPos.y)
+		quad3 = Quadrant(Position(            0,             0),     rookPos.x,     rookPos.y)
+		quad4 = Quadrant(Position(rookPos.x + 1,             0), 9 - rookPos.x,     rookPos.y)
 
 		# Check if the White king is on a boundary between 2 quadrants
 		# If so, check if the White king blocks the Black king from crossing the boundary
@@ -289,36 +283,28 @@ class WhitePlayer(Player):
 			if wkPos.y > rookPos.y:
 				if wkPos.y + 1 < 8:
 					# The Black king can move between quadrants 1 and 2, so set them equal
-					# print("quad1.position = " + str(quad1.position) + ", quad2.position = " + str(quad2.position))
-					# print("quad2.width + 1 + quad1.width = " + str(quad2.width + 1 + quad1.width))
 					quad1.position = quad2.position
-					quad1.width = quad2.width + 1 + quad1.width
-					quad2 = quad1
+					quad1.width = 10
+					quad2.width = 10
 			else:
 				if wkPos.y - 1 > 1:
 					# The Black king can move between quadrants 3 and 4, so set them equal
-					# print("quad4.position = " + str(quad4.position) + ", quad3.position = " + str(quad3.position))
-					# print("quad3.width + 1 + quad4.width = " + str(quad3.width + 1 + quad4.width))
 					quad4.position = quad3.position
-					quad4.width = quad3.width + 1 + quad4.width
-					quad3 = quad4
-		else:
+					quad4.width = 10
+					quad3.width = 10
+		elif wkPos.y == rookPos.y:
 			if wkPos.x > rookPos.x:
 				if wkPos.x + 1 < 8:
 					# The Black king can move between quadrants 1 and 4, so set them equal
-					# print("quad1.position = " + str(quad1.position) + ", quad4.position = " + str(quad4.position))
-					# print("quad4.width + 1 + quad1.width = " + str(quad4.width + 1 + quad1.width))
 					quad1.position = quad4.position
-					quad1.height = quad4.height + 1 + quad1.height
-					quad4 = quad1
+					quad1.height = 10
+					quad4.height = 10
 			else:
 				if wkPos.x - 1 > 1:
 					# The Black king can move between quadrants 2 and 3, so set them equal
-					# print("quad2.position = " + str(quad2.position) + ", quad3.position = " + str(quad3.position))
-					# print("quad3.width + 1 + quad2.width = " + str(quad3.width + 1 + quad2.width))
 					quad2.position = quad3.position
-					quad2.height = quad3.height + 1 + quad2.height
-					quad3 = quad2
+					quad2.height = 10
+					quad3.height = 10
 
 		# Determine in which quadrant(s), if any, the Black king is located
 		bkQuads = []
@@ -330,24 +316,26 @@ class WhitePlayer(Player):
 			bkQuads.append(quad3)
 		if quad4.contains(bkPos):
 			bkQuads.append(quad4)
-		# Else, determine on which 2 quadrant boundaries the Black king is located
+		# Else, determine on which quadrant boundaries the Black king is located
 		if len(bkQuads) == 0:
-			if bkPos.x == rookPos.x:
-				if bkPos.y > rookPos.y:
-					bkQuads.append(quad1)
-					bkQuads.append(quad2)
-				else:
-					bkQuads.append(quad3)
-					bkQuads.append(quad4)
-			else:
-				if bkPos.x > rookPos.x:
-					bkQuads.append(quad1)
-					bkQuads.append(quad4)
-				else:
-					bkQuads.append(quad2)
-					bkQuads.append(quad3)
+			if quad1.contains(bkPos.r()):
+				bkQuads.append(quad1)
+			if quad4.contains(bkPos.r()):
+				bkQuads.append(quad4)
+			if quad2.contains(bkPos.l()):
+				bkQuads.append(quad2)
+			if quad3.contains(bkPos.l()):
+				bkQuads.append(quad3)
+			if quad2.contains(bkPos.t()):
+				bkQuads.append(quad2)
+			if quad1.contains(bkPos.t()):
+				bkQuads.append(quad1)
+			if quad3.contains(bkPos.b()):
+				bkQuads.append(quad3)
+			if quad4.contains(bkPos.b()):
+				bkQuads.append(quad4)
 
-		# Calculate all the positions on the board to which the Black king is currently blocked
+		# Calculate all positions on the board to which the Black king is currently blocked
 		blockedQuads = [quad1, quad2, quad3, quad4]
 		for quad in bkQuads:
 			blockedQuads.remove(quad)
@@ -356,14 +344,35 @@ class WhitePlayer(Player):
 		bkBlockedPositions = list(set(bkBlockedPositions).union(board.whiteAttacks))
 		for pos in board.calcBorderPositions():
 			bkBlockedPositions.remove(pos)
+		hValue = len(bkBlockedPositions)
+
+		# Get the area of the quadrant the White king is in
+		# We want the White king to be in a large quadrant to avoid getting stuck on a board edge
+		wkArea = 0
+		for quad in [quad1, quad2, quad3, quad4]:
+			if quad.contains(wkPos):
+				wkArea = quad.area
+
+		# # Get the distance between the White king and the nearest board edge
+		# # We want to keep the White king away from a board edge until it's time to mate
+		# eDistance = abs(wkPos.x - 1)
+		# eDistance = min(abs(wkPos.x - 8), eDistance)
+		# eDistance = min(abs(wkPos.y - 1), eDistance)
+		# eDistance = min(abs(wkPos.y - 8), eDistance)
 
 		# Get the distance between the two kings by number of moves
+		# The two kings should be closer together for checkmate
 		kDistance = max(abs(bkPos.x - wkPos.x), abs(bkPos.y - wkPos.y))
 
-		# Return the number of blocked board positions minus the distance between the two kings
-		# This is our heuristic value
-		return len(bkBlockedPositions)# - kDistance
+		# Get 4x the distance between the rook and Black king
+		# The rook should be farther from the Black king for safety
+		rDistance = 4 * max(abs(bkPos.x - rookPos.x), abs(bkPos.y - rookPos.y))
 
+		# Return the number of blocked board positions adjusted by our other calculated values above
+		# This is our heuristic formula
+		return hValue + wkArea - kDistance + rDistance
+
+	# Makes a random move for the White player; for debugging only
 	def randomX(self, board):
 		moves = []
 		#include debugging of legal moves on both 
@@ -392,6 +401,7 @@ class WhitePlayer(Player):
 			if piece.color == Color["White"]:
 				self.pieces.append(piece)
 
+# The Black player in the chess game, inherited from the Player base class
 class BlackPlayer(Player):
 	def __init__(self, kingPos):
 		self.pieces = [King(Color["Black"], kingPos)]
@@ -404,27 +414,39 @@ class BlackPlayer(Player):
 
 	# Get best move using mini-max algorithm
 	def heuristicY(self, board, lookahead):
+		# Generate the game graph
 		gameGraph = self.makeGraph(Color["Black"], board, lookahead)
+
+		# Initialize the best move to the first possible move
+		gameGraph.bestMove = gameGraph.root.children[0].board
+
+		# Get the best move from the minimax function
 		self.minimax(gameGraph, gameGraph.root, lookahead, True, -9999999999, 9999999999)
+
 		return gameGraph.bestMove
 
+	# Calculates the heuristic value of a given board state
+	# The Black player's strategy is to avoid check mate for as long as possible
 	def calculateHV(self, board):
 		# If the rook has been captured, return +infinity
 		if len(board.pieces) < 3:
 			return 9999999999
 
-		# If the rook is under attack and not defended by the king, return +infinity
+		# Get the positions of the 3 pieces
 		for piece in board.pieces:
-			if str(piece) == "king" and piece.color == Color["White"]:
-				wkPos = piece.position
-				wkDefense = [wkPos.tl(), wkPos.t(), wkPos.tr(),
-						wkPos.l(), wkPos.r(),
-						wkPos.bl(), wkPos.b(), wkPos.br()]
-		for piece in board.pieces:
-			if str(piece) == "rook":
+			if str(piece) == "king":
+				if piece.color == Color["White"]:
+					wkPos = piece.position
+				else:
+					bkPos = piece.position
+			else:
 				rookPos = piece.position
-				if piece.position in board.blackAttacks and piece.position not in wkDefense:
-					return 9999999999
+
+		# If the rook is under attack and not defended by the king, return +infinity
+		wkDefense = [wkPos.tl(), wkPos.t(), wkPos.tr(), wkPos.l(), wkPos.r(), wkPos.bl(), wkPos.b(),
+				wkPos.br()]
+		if (rookPos in board.blackAttacks) and (rookPos not in wkDefense):
+			return 9999999999
 
 		# If the board is in stale mate, return +infinity
 		board.calcBoardState()
@@ -435,25 +457,22 @@ class BlackPlayer(Player):
 		if board.state == BoardState["Checkmate"]:
 			return -9999999999
 
-		# Count twice the distance to the nearest board edge
+		# Count 4x the distance  to the nearest board edge
 		# Since we want to prioritize staying away from board edges
-		for piece in board.pieces:
-			if str(piece) == "king" and piece.color == Color["Black"]:
-				bkPos = piece.position
-		minDistance = abs(bkPos.x - 1)
+		Distance = abs(bkPos.x - 1)
 		minDistance = min(abs(bkPos.x - 8), minDistance)
 		minDistance = min(abs(bkPos.y - 1), minDistance)
 		minDistance = min(abs(bkPos.y - 8), minDistance)
-		value = 2 * minDistance
+		hValue = 4 * minDistance
 
-		# Add the distance to the white king by number of moves
-		value = value + max(abs(bkPos.x - wkPos.x), abs(bkPos.y - wkPos.y))
+		# Add the distance to the White king by number of moves
+		# Add 0 or 1 for the distance to the White rook by number of moves
+		# This approximates how many moves it would take for White to get in position for checkmate
+		hValue = hValue + max(abs(bkPos.x - wkPos.x), abs(bkPos.y - wkPos.y))
+		if (bkPos.x != rookPos.x) and (bkPos.y != rookPos.y):
+			hValue = hValue + 1
 
-		# # Add 0 or 1 for the distance to the white rook by number of moves
-		# if bkPos.x != rookPos.x and bkPos.y != rookPos.y:
-		# 	value = value + 1
-
-		return value
+		return hValue
 
 	# Get random move
 	def randomY(self, board):
@@ -475,17 +494,20 @@ class BlackPlayer(Player):
 		for player in game.players:
 			player.updatePieces(game.board)
 
+	# Update the Black player's pieces from the game board's list of pieces
 	def updatePieces(self, board):
 		self.pieces = []
 		for piece in board.pieces:
 			if piece.color == Color["Black"]:
 				self.pieces.append(piece)
 
+# A base class representing a generic chess piece
 class Piece(object):
 	def __init__(self, color, position):
 		self.color = color
 		self.position = position
 
+# A class representing a king; inherits from the Piece base class
 class King(Piece):
 	def __str__(self):
 			return "king"
@@ -493,6 +515,7 @@ class King(Piece):
 	def __repr__(self):
 		return self.__str__()
 
+	# Returns a single character representing the King on the chess board
 	def getLabel(self):
 		if self.color == Color["White"]:
 			return "w"
@@ -531,6 +554,7 @@ class King(Piece):
 						newBoard.draw()
 		return legalMoves
 
+# A class representing a rook; inherits from the Piece base class
 class Rook(Piece):
 	def __str__(self):
 		return "rook"
@@ -538,6 +562,7 @@ class Rook(Piece):
 	def __repr__(self):
 		return self.__str__()
 
+	# Returns a single character representing the King on the chess board
 	def getLabel(self):
 		return "r"
 
@@ -598,6 +623,7 @@ class Rook(Piece):
 			print("White " + str(self) + " to " + str(position))
 			newBoard.draw()
 
+# A class representing a position on the chess board as a tuple of x and y coordinates
 class Position(object):
 	def __init__(self, x, y):
 		self.x = x
@@ -609,11 +635,11 @@ class Position(object):
 	def __repr__(self):
 		return self.__str__()
 
+	# Compares the equality of two position objects
 	def __eq__(self, other):
 		return (self.x == other.x) and (self.y == other.y)
 
 	def __hash__(self):
-		#return hash(tuple(self.__str__()))
 		return hash(self.__str__())
 
 	# The following 8 functions are for returning each of the 8 squares around the current position.
@@ -651,11 +677,16 @@ class Position(object):
 	def br(self):
 		return Position(self.x + 1, self.y - 1)
 
+# A class representing a move made during a game of chess using the moving Piece and its destination
 class Move(object):
 	def __init__(self, piece, position):
 		self.piece = piece
 		self.position = position
 
+# The class for the chess board; it contains the pieces currently on the board, the squares that
+# represent the board, and calculations for which squares are currently under attack by each player
+# as well as a list of the squares that are currently occupied by pieces; it also contains the
+# current board state of either "None", "Stalemate", or "Checkmate"
 class Board(object):
 	def __init__(self, whitePieces, blackPieces):
 		self.pieces = whitePieces + blackPieces
@@ -683,7 +714,7 @@ class Board(object):
 				if str(piece) == "king":
 					self.whiteAttacks.extend(
 						[piece.position.tl(), piece.position.t(), piece.position.tr(),
-						piece.position.l(), piece.position.r(),
+						piece.position.l(), piece.position, piece.position.r(),
 						piece.position.bl(), piece.position.b(), piece.position.br()])
 				else:
 					# Get the list of positions the rook can attack

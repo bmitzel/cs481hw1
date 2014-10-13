@@ -57,5 +57,3 @@ if __name__ == "__main__":
 	game = AIChessGame()
 	game.start()
 	play(game)
-	# game.end() if necessary
-	# exit
