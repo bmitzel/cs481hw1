@@ -459,7 +459,7 @@ class BlackPlayer(Player):
 
 		# Count 4x the distance  to the nearest board edge
 		# Since we want to prioritize staying away from board edges
-		Distance = abs(bkPos.x - 1)
+		minDistance = abs(bkPos.x - 1)
 		minDistance = min(abs(bkPos.x - 8), minDistance)
 		minDistance = min(abs(bkPos.y - 1), minDistance)
 		minDistance = min(abs(bkPos.y - 8), minDistance)
