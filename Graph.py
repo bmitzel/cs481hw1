@@ -1,16 +1,12 @@
 #!/usr/bin/env python
-State = {"MIN":0, "MAX":1}
-
 class Graph(object):
-	def __init__(self, start):
-		self.root = Node(start, State["MAX"])
+	def __init__(self, previousPlayer, startingBoardState):
+		self.root = Node(previousPlayer, 0, startingBoardState)
+		self.bestMove = None
 
 class Node(object):
-	def __init__(self, board, state):
+	def __init__(self, playerColor, level, board):
+		self.activePlayer = playerColor
+		self.depth = level
 		self.board = board
-		self.state = state
-		self.value = 0
 		self.children = []
-
-	def insert(self, board):
-		self.children.append(board)
